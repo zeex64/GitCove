@@ -55,7 +55,7 @@ pub struct GithubStatus {
     pub offline: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct DeviceCode {
     pub device_code: String,
@@ -330,7 +330,18 @@ pub fn start_login() -> GitResult<DeviceCode> {
     if status >= 400 {
         return Err(GitError::other(format!("GitHub refused the sign-in request (HTTP {status}). Check the client ID.")));
     }
-    serde_json::from_value(body).map_err(|_| GitError::other("GitHub sent a response this app couldn't read."))
+    parse_device_code(&body).ok_or_else(|| GitError::other("GitHub sent a response this app couldn't read."))
+}
+
+/// GitHub answers in snake_case; `DeviceCode` serializes camelCase for the UI, so read fields by hand.
+fn parse_device_code(v: &Value) -> Option<DeviceCode> {
+    Some(DeviceCode {
+        device_code: v.get("device_code")?.as_str()?.to_string(),
+        user_code: v.get("user_code")?.as_str()?.to_string(),
+        verification_uri: v.get("verification_uri")?.as_str()?.to_string(),
+        expires_in: v.get("expires_in").and_then(Value::as_u64).unwrap_or(900),
+        interval: v.get("interval").and_then(Value::as_u64).unwrap_or(5),
+    })
 }
 
 fn device_error_message(err: &str) -> String {
@@ -500,6 +511,22 @@ mod tests {
         assert!(r.pushed_at > 1_700_000_000);
         let json = serde_json::to_value(&r).unwrap();
         assert!(json.get("cloneUrl").is_some() && json.get("pushedAt").is_some());
+    }
+
+    #[test]
+    fn parses_device_code_json() {
+        let v: Value = serde_json::from_str(
+            r#"{"device_code":"3584d83530557fdd1f46af8289938c8ef79f9dc5","user_code":"WDJB-MJHT",
+                "verification_uri":"https://github.com/login/device","expires_in":899,"interval":5}"#,
+        )
+        .unwrap();
+        let d = parse_device_code(&v).unwrap();
+        assert_eq!(d.user_code, "WDJB-MJHT");
+        assert_eq!(d.expires_in, 899);
+        let json = serde_json::to_value(&d).unwrap();
+        assert_eq!(json["userCode"], "WDJB-MJHT");
+        assert_eq!(json["verificationUri"], "https://github.com/login/device");
+        assert!(parse_device_code(&serde_json::json!({ "error": "Not Found" })).is_none());
     }
 
     #[test]
