@@ -1,0 +1,156 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Redline — main window sketch</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600&family=Red+Hat+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ground:#101215;--panel:#171A1E;--raised:#20242A;--hover:#272C33;--rule:#2B3036;--line:#E8ECEF;--ink2:#9AA2AB;--void:#87909A;--red:#FF6B5E;--cyan:#5CC8F0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--ground);color:var(--line);font:400 14px/1.35 "Barlow",system-ui,sans-serif}
+.mono{font-family:"Red Hat Mono",monospace;font-size:12.5px}
+.cond{font-family:"Barlow Semi Condensed",sans-serif;font-weight:600;letter-spacing:.02em}
+.tabs{height:40px;display:flex;align-items:center;padding:0 10px;gap:4px}
+.tab{height:28px;padding:0 14px;display:flex;align-items:center;color:var(--ink2);border-radius:8px;font-weight:500}
+.tab.on{background:var(--raised);color:var(--line)}
+.win{margin-left:auto;display:flex;gap:14px;color:var(--ink2)}
+.bar{height:52px;display:flex;align-items:center;padding:0 10px 8px;gap:8px}
+.btn{height:34px;padding:0 13px;border-radius:9px;background:var(--raised);display:flex;align-items:center;gap:8px;font-weight:500}
+.btn .n{border:1px solid #3A4048;border-radius:999px;padding:0 7px;font-size:12px}
+.branch{min-width:210px;justify-content:space-between;border:1px solid var(--rule)}
+.spacer{flex:1}
+.search{width:360px;height:34px;border-radius:10px;background:var(--panel);border:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:var(--ink2)}
+.main{display:grid;grid-template-columns:236px 1fr 432px;gap:8px;padding:0 8px;height:728px}
+.pn{background:var(--panel);border:1px solid var(--rule);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.sec{padding:12px 14px 4px;color:var(--ink2);font-size:12.5px;display:flex;justify-content:space-between}
+.ref{height:30px;margin:0 6px;padding:0 8px;border-radius:8px;display:flex;align-items:center;gap:10px}
+.ref svg{flex:none}
+.ref span{flex:1}
+.ref em{font-style:normal;color:var(--ink2);font-size:12px}
+.ref.on{outline:1.5px solid var(--cyan);outline-offset:-1.5px}
+.oplog{margin:auto 8px 8px;border:1px solid var(--rule);border-radius:10px;padding-bottom:6px}
+.op{padding:5px 12px;display:flex;justify-content:space-between;font-size:13px}
+.op em{font-style:normal;color:var(--ink2)}
+.note{margin:10px;border:1.5px solid var(--red);border-radius:11px;height:54px;display:flex;align-items:center;gap:14px;padding:0 10px 0 12px}
+.delta{width:26px;height:22px}
+.note .read{color:var(--ink2);flex:1}
+.ghost{height:34px;padding:0 14px;border-radius:9px;border:1px solid #3A4048;display:flex;align-items:center;font-weight:500}
+.issue{height:34px;padding:0 16px;border-radius:9px;background:var(--line);color:var(--ground);display:flex;align-items:center;font-weight:700}
+.cols,.r{display:grid;grid-template-columns:136px 1fr 118px 92px 74px;align-items:center;padding-right:14px}
+.cols{height:30px;color:var(--ink2);font-size:12.5px;border-bottom:1px solid var(--rule)}
+.rows{position:relative;flex:1;overflow:hidden}
+.rows svg{position:absolute;left:0;top:0}
+.r{height:30px}
+.r .m{display:flex;gap:8px;align-items:center;white-space:nowrap;overflow:hidden}
+.r .a,.r .d,.r .mono{color:var(--ink2)}
+.r.void .m,.r.void .a,.r.void .d,.r.void .mono{color:var(--void);text-decoration:line-through;text-decoration-color:var(--red)}
+.lbl{font-size:12px;padding:0 8px;border:1px solid #4A515A;border-radius:999px}
+.rh{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--rule)}
+.rh h2{font-size:15px;font-weight:700}
+.f{height:30px;margin:0 6px;padding:0 10px;border-radius:8px;display:flex;align-items:center;gap:10px}
+.f .st{width:18px;color:var(--ink2);font-weight:700}
+.f span{flex:1}
+.f.on{outline:1.5px solid var(--cyan);outline-offset:-1.5px}
+.diff{margin:10px 12px;border-radius:10px;border:1px solid var(--rule);overflow:hidden}
+.dh{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;color:var(--ink2);border-bottom:1px solid var(--rule)}
+.ln{height:21px;display:flex;align-items:center;padding:0 12px;white-space:pre}
+.ln.p{box-shadow:inset 3px 0 #E8ECEF;background:rgba(232,236,239,.06)}.ln.x{box-shadow:inset 3px 0 var(--red);color:#C9CED4;text-decoration:line-through;text-decoration-color:var(--red)}
+.ln b{width:34px;color:var(--void);font-weight:400;text-decoration:none}
+.msg{margin-top:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.in{border-radius:10px;border:1px solid #4A515A;height:38px;padding:0 12px;display:flex;align-items:center;font-weight:500}
+.ta{border-radius:10px;border:1px solid var(--rule);height:70px;padding:10px 12px;color:var(--ink2)}
+.commit{height:40px;border-radius:10px;background:var(--line);color:var(--ground);display:flex;align-items:center;justify-content:center;font-weight:700}
+.tb{margin:8px;height:56px;border:1px solid var(--rule);border-radius:12px;background:var(--panel);display:grid;grid-template-columns:2fr 1.4fr 1.4fr 1fr 1fr 2fr;overflow:hidden}
+.tb div{border-right:1px solid var(--rule);padding:7px 14px;display:flex;flex-direction:column;justify-content:center}
+.tb div:last-child{border:0}
+.tb small{color:var(--ink2);font-size:11.5px}
+.tb b{font-weight:600}
+</style></head><body>
+<div class="tabs"><div class="tab on">NewGitGUIProject</div><div class="tab">dotfiles</div><div class="tab">blog</div><div class="tab">+</div><div class="win"><span>—</span><span>▢</span><span>✕</span></div></div>
+<div class="bar">
+<div class="btn branch"><span>feat/undo-log</span><span>▾</span></div>
+<div class="btn">Fetch</div><div class="btn">Pull <span class="n">2</span></div><div class="btn">Push <span class="n">4</span></div>
+<div class="spacer"></div>
+<div class="search"><span>Search commits, branches, actions</span><span class="mono">Ctrl K</span></div>
+<div class="btn">↶ Undo commit</div>
+</div>
+<div class="main">
+<aside class="pn">
+<div class="sec cond"><span>Branches</span><span>4</span></div>
+<div class="ref"><svg width="22" height="6"><path d="M1 3H21" stroke="#E8ECEF" stroke-width="2.5"/></svg><span>main</span><em>synced</em></div>
+<div class="ref on"><svg width="22" height="6"><path d="M1 3H21" stroke="#E8ECEF" stroke-width="1.6" stroke-dasharray="5 3"/></svg><span>feat/undo-log</span><em>↑4 ↓2</em></div>
+<div class="ref"><svg width="22" height="6"><path d="M1 3H21" stroke="#E8ECEF" stroke-width="1.6" stroke-dasharray="8 2 2 2"/></svg><span>feat/commit-graph</span><em>local</em></div>
+<div class="ref"><svg width="22" height="6"><path d="M1 3H21" stroke="#E8ECEF" stroke-width="1"/></svg><span>fix/wayland-scaling</span><em>merged</em></div>
+<div class="sec cond"><span>Remotes</span><span>2</span></div>
+<div class="ref"><span>origin</span><em>GitHub</em></div>
+<div class="ref"><span>codeberg</span><em>Forgejo</em></div>
+<div class="sec cond"><span>Pull requests</span><span>2</span></div>
+<div class="ref"><span>Orthogonal lane drawing</span><em>#12</em></div>
+<div class="ref"><span>Wayland scaling</span><em>#11</em></div>
+<div class="oplog"><div class="sec cond"><span>Revision history</span><span>All</span></div>
+<div class="op"><span>Rev C · Committed</span><em>4 min</em></div>
+<div class="op"><span>Rev B · Checked out</span><em>12 min</em></div>
+<div class="op"><span>Rev A · Fetched origin</span><em>18 min</em></div></div>
+</aside>
+<section class="pn">
+<div class="note"><svg class="delta" viewBox="0 0 26 22"><path d="M13 2L24 20H2Z" fill="none" stroke="#FF6B5E" stroke-width="1.6" stroke-linejoin="round"/><text x="13" y="17" fill="#FF6B5E" font-size="10" font-weight="700" text-anchor="middle" font-family="Barlow">D</text></svg><b>Rebase feat/undo-log onto main</b><span class="read">4 commits rewritten · no conflicts expected · 3 changed files stashed and restored</span><div class="ghost">Discard</div><div class="issue">Issue rebase</div></div>
+<div class="cols cond"><span style="padding-left:14px">Graph</span><span>Message</span><span>Author</span><span>Date</span><span>Commit</span></div>
+<div class="rows">
+<svg width="640" height="640" viewBox="0 0 640 640" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M6 4a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 16 0a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 0 16a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 -16 0a8 8 0 0 1 0 -16a8 8 0 0 1 0 -16a8 8 0 0 1 0 -16a8 8 0 0 1 0 -16a8 8 0 0 1 0 -16a8 8 0 0 1 0 -16a8 8 0 0 1 0 -16Z" stroke="#FF6B5E" stroke-width="1.4" transform="translate(4 2) scale(1 .98)"/>
+<g stroke="#E8ECEF">
+<path d="M24 120V615" stroke-width="2.5"/>
+<path d="M24 120H42a6 6 0 0 0 6-6V15" stroke-width="1.6" stroke="#FF6B5E" stroke-dasharray="5 3"/>
+<path d="M30 132H96M30 138H96" stroke-width="1"/>
+<path d="M24 450H90a6 6 0 0 0 6-6V135" stroke-width="1"/>
+<path d="M66 450a6 6 0 0 0 6-6V195" stroke-width="1.6" stroke-dasharray="8 2 2 2"/>
+<path d="M42 450a6 6 0 0 0 6-6V225" stroke-width="1.6" stroke="#5A616A" stroke-dasharray="5 3"/>
+</g>
+<g fill="#171A1E" stroke="#FF6B5E" stroke-width="1.6"><circle cx="48" cy="15" r="5"/><circle cx="48" cy="45" r="5"/><circle cx="48" cy="75" r="5"/><circle cx="48" cy="105" r="5"/></g>
+<g stroke="#FF6B5E" stroke-width="1.4"><path d="M42 219l12 12M54 219l-12 12M42 249l12 12M54 249l-12 12M42 309l12 12M54 309l-12 12M42 369l12 12M54 369l-12 12"/></g>
+<g fill="#171A1E" stroke="#E8ECEF" stroke-width="1.6"><circle cx="24" cy="135" r="7" stroke-width="2.5"/><circle cx="24" cy="285" r="5"/><circle cx="24" cy="435" r="5"/><circle cx="24" cy="465" r="5"/><circle cx="24" cy="495" r="5"/><circle cx="24" cy="525" r="5"/><circle cx="24" cy="555" r="5"/><circle cx="24" cy="585" r="5"/><circle cx="24" cy="615" r="5"/><circle cx="96" cy="165" r="5"/><circle cx="96" cy="345" r="5"/><circle cx="72" cy="195" r="5"/><circle cx="72" cy="405" r="5"/></g>
+<g fill="none" stroke="#FF6B5E" stroke-width="1.3"><path d="M118 9l7 12h-14Z"/><path d="M118 39l7 12h-14Z"/><path d="M118 69l7 12h-14Z"/><path d="M118 99l7 12h-14Z"/></g>
+</svg>
+<div class="r"><span></span><span class="m"><span class="lbl">feat/undo-log</span>Record undo entries for stash push and pop</span><span class="a">You</span><span class="d">rewritten</span><span class="mono">new</span></div>
+<div class="r"><span></span><span class="m">Bind Ctrl+Z to the operation log</span><span class="a">You</span><span class="d">rewritten</span><span class="mono">new</span></div>
+<div class="r"><span></span><span class="m">Snapshot refs before every write</span><span class="a">You</span><span class="d">rewritten</span><span class="mono">new</span></div>
+<div class="r"><span></span><span class="m">Add operation log table and migration</span><span class="a">You</span><span class="d">rewritten</span><span class="mono">new</span></div>
+<div class="r"><span></span><span class="m"><span class="lbl">main</span><span class="lbl">origin/main</span><b>Merge branch 'fix/wayland-scaling'</b></span><span class="a">You</span><span class="d">2 h ago</span><span class="mono">9f3c2e1</span></div>
+<div class="r"><span></span><span class="m"><span class="lbl">fix/wayland-scaling</span>Respect GDK_SCALE and per-monitor scale on Wayland</span><span class="a">You</span><span class="d">3 h ago</span><span class="mono">41d07ab</span></div>
+<div class="r"><span></span><span class="m"><span class="lbl">feat/commit-graph</span>Draw lanes by line type</span><span class="a">You</span><span class="d">5 h ago</span><span class="mono">c28e9f0</span></div>
+<div class="r void"><span></span><span class="m">Record undo entries for stash push and pop</span><span class="a">You</span><span class="d">yesterday</span><span class="mono">7ae1b44</span></div>
+<div class="r void"><span></span><span class="m">Bind Ctrl+Z to the operation log</span><span class="a">You</span><span class="d">yesterday</span><span class="mono">0b9d3f2</span></div>
+<div class="r"><span></span><span class="m">Bump tauri to 2.1.1</span><span class="a">renovate[bot]</span><span class="d">yesterday</span><span class="mono">e5a1c07</span></div>
+<div class="r void"><span></span><span class="m">Snapshot refs before every write</span><span class="a">You</span><span class="d">2 days ago</span><span class="mono">63fe0d9</span></div>
+<div class="r"><span></span><span class="m">Read scale factor from the active monitor</span><span class="a">You</span><span class="d">2 days ago</span><span class="mono">1c4b8e2</span></div>
+<div class="r void"><span></span><span class="m">Add operation log table and migration</span><span class="a">You</span><span class="d">3 days ago</span><span class="mono">a90c5d1</span></div>
+<div class="r"><span></span><span class="m">First pass at lane allocation</span><span class="a">You</span><span class="d">3 days ago</span><span class="mono">5e7f2a0</span></div>
+<div class="r"><span></span><span class="m">Split diff view into hunks</span><span class="a">You</span><span class="d">4 days ago</span><span class="mono">d31b6c8</span></div>
+<div class="r"><span></span><span class="m"><span class="lbl">v0.1.0</span>Set up Svelte 5 frontend with Vite</span><span class="a">You</span><span class="d">5 days ago</span><span class="mono">8c0e4f7</span></div>
+<div class="r"><span></span><span class="m">Read commits through the git backend</span><span class="a">You</span><span class="d">6 days ago</span><span class="mono">f14a9b3</span></div>
+<div class="r"><span></span><span class="m">Open a repository from a path</span><span class="a">You</span><span class="d">1 week ago</span><span class="mono">2b7d0e6</span></div>
+<div class="r"><span></span><span class="m">Persist window size and position</span><span class="a">You</span><span class="d">1 week ago</span><span class="mono">0e9c7a1</span></div>
+<div class="r"><span></span><span class="m">Tauri 2 app scaffold</span><span class="a">You</span><span class="d">1 week ago</span><span class="mono">77d2f40</span></div>
+</div>
+</section>
+<section class="pn">
+<div class="rh"><h2>Working changes</h2><span class="cond" style="color:var(--ink2);font-size:12.5px">Markup on feat/undo-log</span></div>
+<div class="sec cond"><span>Unstaged · 2</span><span>Stage all</span></div>
+<div class="f on"><span class="st">M</span><span>src/lib/graph/lanes.ts</span><em class="mono">+42 −7</em></div>
+<div class="f"><span class="st">M</span><span>src/routes/+page.svelte</span><em class="mono">+3 −1</em></div>
+<div class="sec cond"><span>Staged · 1</span><span>Unstage all</span></div>
+<div class="f"><span class="st">A</span><span>src-tauri/src/git/oplog.rs</span><em class="mono">+118</em></div>
+<div class="diff mono"><div class="dh"><span>lanes.ts</span><span>@@ −38,9 +38,14 @@</span></div>
+<div class="ln"><b>38</b>export function allocate(rows: Row[]) {</div>
+<div class="ln x"><b>39</b>  const lanes = new Array(rows.length);</div>
+<div class="ln p"><b>39</b>  const lanes: Lane[] = [];</div>
+<div class="ln p"><b>40</b>  // first parent keeps its lane</div>
+<div class="ln p"><b>41</b>  for (const row of rows) {</div>
+<div class="ln p"><b>42</b>    const slot = lanes.findIndex(l =&gt; l.next === row.id);</div>
+<div class="ln"><b>43</b>    …</div></div>
+<div class="msg">
+<div class="in">Allocate lanes left to right by first parent</div>
+<div class="ta">Keeps main on the leftmost lane so long-lived branches stop jumping columns.</div>
+<div class="commit">Commit 1 file to feat/undo-log</div>
+</div>
+</section>
+</div>
+<div class="tb"><div><small class="cond">Repository</small><b>NewGitGUIProject</b></div><div><small class="cond">Branch</small><b>feat/undo-log</b></div><div><small class="cond">Against origin</small><b>↑4 ↓2</b></div><div><small class="cond">Revision</small><b>C</b></div><div><small class="cond">Last fetch</small><b>3 min</b></div><div><small class="cond">Pending</small><b style="color:var(--red)">Rebase D · not issued</b></div></div>
+</body></html>

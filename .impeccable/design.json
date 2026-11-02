@@ -1,0 +1,719 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-01T19:04:38+00:00",
+  "title": "Design System: Repository Window",
+  "extensions": {
+    "colorMeta": {
+      "bg-0": {
+        "role": "neutral",
+        "displayName": "Graphite Night",
+        "tonalRamp": [
+          "#0e1013",
+          "#151618",
+          "#1e1f22",
+          "#2b2d31",
+          "#35383e",
+          "#3e424a",
+          "#464a52",
+          "#5a5f68"
+        ]
+      },
+      "bg-1": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "tonalRamp": [
+          "#0e1013",
+          "#151618",
+          "#1e1f22",
+          "#2b2d31",
+          "#35383e",
+          "#3e424a",
+          "#464a52",
+          "#5a5f68"
+        ]
+      },
+      "bg-2": {
+        "role": "neutral",
+        "displayName": "Raised Graphite",
+        "tonalRamp": [
+          "#0e1013",
+          "#151618",
+          "#1e1f22",
+          "#2b2d31",
+          "#35383e",
+          "#3e424a",
+          "#464a52",
+          "#5a5f68"
+        ]
+      },
+      "bg-3": {
+        "role": "neutral",
+        "displayName": "Hover Graphite",
+        "tonalRamp": [
+          "#0e1013",
+          "#151618",
+          "#1e1f22",
+          "#2b2d31",
+          "#35383e",
+          "#3e424a",
+          "#464a52",
+          "#5a5f68"
+        ]
+      },
+      "bg-4": {
+        "role": "neutral",
+        "displayName": "Pressed Graphite",
+        "tonalRamp": [
+          "#0e1013",
+          "#151618",
+          "#1e1f22",
+          "#2b2d31",
+          "#35383e",
+          "#3e424a",
+          "#464a52",
+          "#5a5f68"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "tonalRamp": [
+          "#0e1013",
+          "#151618",
+          "#1e1f22",
+          "#2b2d31",
+          "#35383e",
+          "#3e424a",
+          "#464a52",
+          "#5a5f68"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "tonalRamp": [
+          "#0e1013",
+          "#151618",
+          "#1e1f22",
+          "#2b2d31",
+          "#35383e",
+          "#3e424a",
+          "#464a52",
+          "#5a5f68"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "tonalRamp": [
+          "#2b2d31",
+          "#464a52",
+          "#6b7079",
+          "#969ca5",
+          "#a1a6ae",
+          "#c3c7cd",
+          "#e3e5e8",
+          "#f4f5f6"
+        ]
+      },
+      "text-2": {
+        "role": "neutral",
+        "displayName": "Fog",
+        "tonalRamp": [
+          "#2b2d31",
+          "#464a52",
+          "#6b7079",
+          "#969ca5",
+          "#a1a6ae",
+          "#c3c7cd",
+          "#e3e5e8",
+          "#f4f5f6"
+        ]
+      },
+      "text-3": {
+        "role": "neutral",
+        "displayName": "Ash",
+        "tonalRamp": [
+          "#2b2d31",
+          "#464a52",
+          "#6b7079",
+          "#969ca5",
+          "#a1a6ae",
+          "#c3c7cd",
+          "#e3e5e8",
+          "#f4f5f6"
+        ]
+      },
+      "on-color": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "#0e1013",
+          "#151618",
+          "#1e1f22",
+          "#2b2d31",
+          "#35383e",
+          "#3e424a",
+          "#464a52",
+          "#5a5f68"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Signal Blue",
+        "canonical": "oklch(70.5% 0.158 253)",
+        "tonalRamp": [
+          "#000b1e",
+          "#01254a",
+          "#124375",
+          "#2763a3",
+          "#3c85d3",
+          "#5ea9fc",
+          "#a3cdfe",
+          "#e4f0fe"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Lifted Blue",
+        "tonalRamp": [
+          "#000b1e",
+          "#01254a",
+          "#124375",
+          "#2763a3",
+          "#3c85d3",
+          "#5ea9fc",
+          "#a3cdfe",
+          "#e4f0fe"
+        ]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Blue Wash"
+      },
+      "accent-line": {
+        "role": "primary",
+        "displayName": "Blue Rule"
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "Commit Green",
+        "canonical": "oklch(79.7% 0.164 160)",
+        "tonalRamp": [
+          "#000f06",
+          "#012e1b",
+          "#0b4f33",
+          "#15734c",
+          "#179a66",
+          "#2ec183",
+          "#57e8a5",
+          "#c6fede"
+        ]
+      },
+      "success-hover": {
+        "role": "secondary",
+        "displayName": "Commit Green Hover",
+        "tonalRamp": [
+          "#000f06",
+          "#012e1b",
+          "#0b4f33",
+          "#15734c",
+          "#179a66",
+          "#2ec183",
+          "#57e8a5",
+          "#c6fede"
+        ]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "Caution Amber",
+        "canonical": "oklch(83.4% 0.141 85)",
+        "tonalRamp": [
+          "#110a00",
+          "#312300",
+          "#533e07",
+          "#795c10",
+          "#a07d25",
+          "#c99e3a",
+          "#f2c24f",
+          "#feedc9"
+        ]
+      },
+      "warning-soft": {
+        "role": "secondary",
+        "displayName": "Amber Wash"
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Alarm Red",
+        "canonical": "oklch(71.2% 0.181 23)",
+        "tonalRamp": [
+          "#1f0002",
+          "#470b0f",
+          "#722224",
+          "#a03a3b",
+          "#d15353",
+          "#fb7573",
+          "#fdb3af",
+          "#fee9e7"
+        ]
+      },
+      "danger-hover": {
+        "role": "secondary",
+        "displayName": "Alarm Red Hover",
+        "tonalRamp": [
+          "#1f0002",
+          "#470b0f",
+          "#722224",
+          "#a03a3b",
+          "#d15353",
+          "#fb7573",
+          "#fdb3af",
+          "#fee9e7"
+        ]
+      },
+      "danger-soft": {
+        "role": "secondary",
+        "displayName": "Red Wash"
+      },
+      "add-bg": {
+        "role": "secondary",
+        "displayName": "Add Wash"
+      },
+      "add-text": {
+        "role": "secondary",
+        "displayName": "Add Mint",
+        "tonalRamp": [
+          "#000f07",
+          "#022d1d",
+          "#0f4e36",
+          "#267153",
+          "#3c9670",
+          "#54bc90",
+          "#6ce4b1",
+          "#c3ffe1"
+        ]
+      },
+      "del-bg": {
+        "role": "secondary",
+        "displayName": "Delete Wash"
+      },
+      "del-text": {
+        "role": "secondary",
+        "displayName": "Delete Rose",
+        "tonalRamp": [
+          "#1a0405",
+          "#3c1819",
+          "#623132",
+          "#8b4c4d",
+          "#b66969",
+          "#e38787",
+          "#ffb2b1",
+          "#ffe8e8"
+        ]
+      },
+      "lane-0": {
+        "role": "tertiary",
+        "displayName": "Lane 0 Blue (default branch only)",
+        "tonalRamp": [
+          "#000b1e",
+          "#01254a",
+          "#124375",
+          "#2763a3",
+          "#3c85d3",
+          "#5ea9fc",
+          "#a3cdfe",
+          "#e4f0fe"
+        ]
+      },
+      "lane-1": {
+        "role": "tertiary",
+        "displayName": "Lane 1 Orange",
+        "canonical": "oklch(71.0% 0.157 38)",
+        "tonalRamp": [
+          "#1b0300",
+          "#431304",
+          "#6c2b16",
+          "#98452a",
+          "#c66040",
+          "#f57e59",
+          "#fdb69f",
+          "#ffe9e2"
+        ]
+      },
+      "lane-2": {
+        "role": "tertiary",
+        "displayName": "Lane 2 Violet",
+        "canonical": "oklch(72.6% 0.166 299)",
+        "tonalRamp": [
+          "#0f0420",
+          "#2b1946",
+          "#4a3370",
+          "#6b4f9d",
+          "#8f6ccc",
+          "#b48bfd",
+          "#d0bdfb",
+          "#f0ebfe"
+        ]
+      },
+      "lane-3": {
+        "role": "tertiary",
+        "displayName": "Lane 3 Green",
+        "tonalRamp": [
+          "#000f06",
+          "#012e1b",
+          "#0b4f33",
+          "#15734c",
+          "#179a66",
+          "#2ec183",
+          "#57e8a5",
+          "#c6fede"
+        ]
+      },
+      "lane-4": {
+        "role": "tertiary",
+        "displayName": "Lane 4 Amber",
+        "tonalRamp": [
+          "#110a00",
+          "#312300",
+          "#533e07",
+          "#795c10",
+          "#a07d25",
+          "#c99e3a",
+          "#f2c24f",
+          "#feedc9"
+        ]
+      },
+      "lane-5": {
+        "role": "tertiary",
+        "displayName": "Lane 5 Cyan",
+        "canonical": "oklch(81.1% 0.109 203)",
+        "tonalRamp": [
+          "#000e10",
+          "#032b2e",
+          "#054b50",
+          "#1d6e74",
+          "#339299",
+          "#4ab7c0",
+          "#69dee7",
+          "#c6fafe"
+        ]
+      },
+      "lane-6": {
+        "role": "tertiary",
+        "displayName": "Lane 6 Pink",
+        "canonical": "oklch(76.3% 0.137 349)",
+        "tonalRamp": [
+          "#19030e",
+          "#3b162a",
+          "#612e49",
+          "#8a486a",
+          "#b4648d",
+          "#e181b2",
+          "#feacd4",
+          "#ffe7f2"
+        ]
+      },
+      "lane-7": {
+        "role": "tertiary",
+        "displayName": "Lane 7 Lime",
+        "canonical": "oklch(78.3% 0.124 127)",
+        "tonalRamp": [
+          "#070e00",
+          "#1d2a07",
+          "#38491b",
+          "#546a31",
+          "#728e48",
+          "#91b260",
+          "#b5d882",
+          "#dcfcb1"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "First-run welcome heading only."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Selected commit summary in the commit detail panel."
+      },
+      "subtitle": {
+        "displayName": "Subtitle",
+        "purpose": "Empty-state titles; welcome lede at 400; palette search input."
+      },
+      "banner-title": {
+        "displayName": "Banner Title",
+        "purpose": "Preview and operation banner headlines."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default for all UI text, rows, menus and buttons."
+      },
+      "body-sm": {
+        "displayName": "Body Small",
+        "purpose": "Banner readouts and sub-lines, sidebar filter."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Small buttons, shortcut hints, toast links, prompt field labels."
+      },
+      "chip": {
+        "displayName": "Chip",
+        "purpose": "Ref chips, conflict marker labels, counts, palette group names."
+      },
+      "label": {
+        "displayName": "Section Label",
+        "purpose": "Uppercase list-group headers only; never an eyebrow above a heading."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Literal machine strings: SHAs, diff lines, hunk headers, diff-header paths, refs quoted in prose. Ligatures off."
+      }
+    },
+    "shadows": [
+      {
+        "name": "pop",
+        "value": "0 14px 36px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35)",
+        "purpose": "Only for floating surfaces: context menus, anchored prompts and popovers, toasts, the command palette."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The single easing curve for every transition and entrance."
+      },
+      {
+        "name": "state",
+        "value": "120ms",
+        "purpose": "Hover, border and colour changes on controls; context menu pop; palette scrim fade."
+      },
+      {
+        "name": "popover-in",
+        "value": "140ms",
+        "purpose": "Anchored prompts and popovers: fade plus 4px drop."
+      },
+      {
+        "name": "palette-in",
+        "value": "150ms",
+        "purpose": "Command palette entrance; sidebar chevron rotation."
+      },
+      {
+        "name": "diff-toolbar-in",
+        "value": "160ms",
+        "purpose": "Diff line-selection toolbar rise."
+      },
+      {
+        "name": "banner-in",
+        "value": "180ms",
+        "purpose": "Preview banner drop-in."
+      },
+      {
+        "name": "toast-in",
+        "value": "200ms",
+        "purpose": "Toast rise (8px); progress bar width."
+      },
+      {
+        "name": "ghost-in",
+        "value": "220ms",
+        "purpose": "Signature: preview ghost nodes scale from 0.6 and fade in; ghost rows fade in with them."
+      },
+      {
+        "name": "spinner",
+        "value": "1s linear infinite",
+        "purpose": "Status bar busy spinner."
+      },
+      {
+        "name": "shimmer",
+        "value": "1.4s linear infinite",
+        "purpose": "Skeleton rows while history loads."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "1ms",
+        "purpose": "All animations and transitions collapse under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sidebar-rail",
+        "value": "1200px (window width): sidebar becomes a 52px icon rail; changes panel minimum drops to 360px"
+      },
+      {
+        "name": "toolbar-compact",
+        "value": "1180px (toolbar container): repo pill and search lose their text"
+      },
+      {
+        "name": "history-tighten",
+        "value": "900px (history container): author/date/SHA columns narrow"
+      },
+      {
+        "name": "history-no-sha",
+        "value": "680px (history container)"
+      },
+      {
+        "name": "history-no-author",
+        "value": "640px (history container)"
+      },
+      {
+        "name": "history-no-date",
+        "value": "420px (history container)"
+      },
+      {
+        "name": "short-window",
+        "value": "760px (window height): changes panel compresses lists, diff header and commit box"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "The one button shape; raised graphite at rest.",
+      "html": "<button class=\"ds-btn\">Fetch</button>",
+      "css": ".ds-btn{height:30px;padding:0 12px;border:1px solid transparent;border-radius:var(--radius);background:var(--bg-2);color:var(--text);font:500 13px var(--font-ui);display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background-color 120ms var(--ease-out),border-color 120ms var(--ease-out),color 120ms var(--ease-out)}.ds-btn:hover{background:var(--bg-3)}.ds-btn:active{background:var(--bg-4)}.ds-btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main action in a group; Signal Blue with Ink text.",
+      "html": "<button class=\"ds-btn-primary\">Apply rebase</button>",
+      "css": ".ds-btn-primary{height:30px;padding:0 12px;border:1px solid transparent;border-radius:var(--radius);background:var(--accent);color:var(--on-color);font:600 13px var(--font-ui);cursor:pointer;transition:background-color 120ms var(--ease-out)}.ds-btn-primary:hover{background:var(--accent-hover)}.ds-btn-primary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}"
+    },
+    {
+      "name": "Commit Button",
+      "kind": "button",
+      "refersTo": "button-success",
+      "description": "Green fill reserved for committing.",
+      "html": "<button class=\"ds-btn-success\">Commit 1 file to main</button>",
+      "css": ".ds-btn-success{height:30px;padding:0 12px;border:0;border-radius:var(--radius);background:var(--success);color:var(--on-color);font:600 13px var(--font-ui);cursor:pointer;transition:background-color 120ms var(--ease-out)}.ds-btn-success:hover{background:var(--success-hover)}.ds-btn-success:focus-visible{outline:2px solid var(--accent);outline-offset:1px}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary actions such as Cancel or Abort.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost{height:30px;padding:0 12px;border:1px solid var(--line-strong);border-radius:var(--radius);background:transparent;color:var(--text);font:500 13px var(--font-ui);cursor:pointer;transition:background-color 120ms var(--ease-out)}.ds-btn-ghost:hover{background:var(--bg-3)}.ds-btn-ghost:focus-visible{outline:2px solid var(--accent);outline-offset:1px}"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "The one input shape; border turns blue on focus.",
+      "html": "<input class=\"ds-field\" placeholder=\"Commit summary\">",
+      "css": ".ds-field{height:32px;width:280px;padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--radius-md);background:var(--bg-2);color:var(--text);font:13px var(--font-ui);caret-color:var(--accent);outline:none;transition:border-color 120ms var(--ease-out)}.ds-field::placeholder{color:var(--text-3)}.ds-field:focus{border-color:var(--accent)}"
+    },
+    {
+      "name": "Ref Chips",
+      "kind": "chip",
+      "refersTo": "ref-chip-branch",
+      "description": "Branch chips fill with their lane colour and Ink text; remote chips ring, tags sit on bg-3.",
+      "html": "<span class=\"ds-chip\" style=\"background:var(--lane-0)\">main</span> <span class=\"ds-chip\" style=\"background:var(--lane-2)\">fix/wayland</span> <span class=\"ds-chip ds-chip-remote\" style=\"--c:var(--lane-0)\">origin/main</span> <span class=\"ds-chip ds-chip-tag\">v0.1.0</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;height:20px;max-width:220px;padding:0 7px;border-radius:var(--radius-sm);font:600 11.5px var(--font-ui);color:var(--on-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-chip-remote{background:transparent;color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}.ds-chip-tag{background:var(--bg-3);color:var(--text)}"
+    },
+    {
+      "name": "Sidebar Section",
+      "kind": "nav",
+      "refersTo": "section-label",
+      "description": "Uppercase section header over 28px rounded list items; checked-out branch on bg-3 at weight 600.",
+      "html": "<nav class=\"ds-side\"><div class=\"ds-sec\"><span>Local</span><span class=\"ds-count\">3</span></div><a class=\"ds-item ds-on\">feat/undo-log</a><a class=\"ds-item\">main</a><a class=\"ds-item\">fix/wayland-scaling</a></nav>",
+      "css": ".ds-side{width:248px;background:var(--bg-1);padding:6px 0;font:13px var(--font-ui);color:var(--text)}.ds-sec{height:32px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}.ds-count{font-size:11.5px;letter-spacing:0;font-weight:400}.ds-item{display:flex;align-items:center;height:28px;margin:0 6px;padding:0 8px 0 12px;border-radius:var(--radius-sm);cursor:pointer}.ds-item:hover{background:var(--bg-2)}.ds-item.ds-on{background:var(--bg-3);font-weight:600}"
+    },
+    {
+      "name": "Context Menu",
+      "kind": "custom",
+      "refersTo": "context-menu",
+      "description": "Floating menu with Pop shadow; active row fills blue with Ink text.",
+      "html": "<div class=\"ds-menu\"><button class=\"ds-mi ds-act\"><span>Check out</span><span class=\"ds-hint\">Enter</span></button><button class=\"ds-mi\"><span>Rebase onto main</span></button><div class=\"ds-sep\"></div><button class=\"ds-mi ds-danger\"><span>Delete branch</span><span class=\"ds-hint\">Del</span></button></div>",
+      "css": ".ds-menu{width:240px;padding:5px;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--radius-md);box-shadow:var(--shadow-pop);font:13px var(--font-ui)}.ds-mi{width:100%;height:28px;padding:0 10px;border:0;border-radius:var(--radius-sm);background:transparent;color:var(--text);display:flex;justify-content:space-between;align-items:center;cursor:pointer}.ds-mi:hover,.ds-mi.ds-act{background:var(--accent);color:var(--on-color)}.ds-hint{font-size:12px;color:var(--text-2)}.ds-mi:hover .ds-hint,.ds-act .ds-hint{color:inherit;opacity:.75}.ds-danger{color:var(--danger)}.ds-danger:hover{background:var(--danger);color:var(--on-color)}.ds-sep{height:1px;margin:5px 6px;background:var(--line-strong)}"
+    },
+    {
+      "name": "Preview Banner",
+      "kind": "custom",
+      "refersTo": "button-primary",
+      "description": "Signature: the destructive operation previewed in place with readout and Apply/Cancel.",
+      "html": "<div class=\"ds-banner\"><div class=\"ds-disc\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/></svg></div><div class=\"ds-text\"><p class=\"ds-title\"><span class=\"ds-pre\">Preview:</span> Rebase feat/undo-log onto main</p><p class=\"ds-read\">4 commits rewritten <span class=\"ds-ok\">No conflicts expected</span></p><p class=\"ds-sub\">You can undo this</p></div><button class=\"ds-g\">Cancel</button><button class=\"ds-p\">Apply rebase</button></div>",
+      "css": ".ds-banner{display:flex;align-items:center;gap:12px;padding:10px 10px 10px 12px;border:1px solid var(--accent-line);border-radius:var(--radius-lg);background:linear-gradient(0deg,var(--accent-soft),var(--accent-soft)),var(--bg-1);font:13px var(--font-ui);color:var(--text)}.ds-disc{width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:none}.ds-text{flex:1;display:flex;flex-direction:column;gap:3px}.ds-text p{margin:0}.ds-title{font-size:13.5px;font-weight:600}.ds-pre{color:var(--text-2);font-weight:500}.ds-read{font-size:12.5px;display:flex;gap:14px}.ds-ok{color:var(--success)}.ds-sub{color:var(--text-2)}.ds-g,.ds-p{height:30px;padding:0 12px;border-radius:var(--radius);font:500 13px var(--font-ui);cursor:pointer}.ds-g{background:transparent;border:1px solid var(--line-strong);color:var(--text)}.ds-g:hover{background:var(--bg-3)}.ds-p{background:var(--accent);border:1px solid transparent;color:var(--on-color);font-weight:600}.ds-p:hover{background:var(--accent-hover)}.ds-g:focus-visible,.ds-p:focus-visible{outline:2px solid var(--accent);outline-offset:1px}"
+    },
+    {
+      "name": "Undo Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Bottom-right confirmation with an Undo that names what it reverses.",
+      "html": "<div class=\"ds-toast\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"var(--success)\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/></svg><p>Deleted branch fix/old-scroll</p><button class=\"ds-undo\">Undo</button></div>",
+      "css": ".ds-toast{width:380px;padding:10px 8px 10px 12px;display:flex;align-items:flex-start;gap:10px;background:var(--bg-2);border:1px solid var(--line-strong);border-radius:var(--radius-lg);box-shadow:var(--shadow-pop);font:13px/1.4 var(--font-ui);color:var(--text)}.ds-toast p{flex:1;margin:1px 0 0}.ds-undo{height:24px;padding:0 8px;border:1px solid transparent;border-radius:var(--radius-sm);background:var(--bg-3);color:var(--text);font:500 12px var(--font-ui);cursor:pointer}.ds-undo:hover{background:var(--bg-4)}.ds-undo:focus-visible{outline:2px solid var(--accent);outline-offset:1px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Graphite Workbench",
+    "overview": "A dark, rounded desktop Git client in the GitKraken and Fork layout lineage, executed at GitHub Desktop's level of calm: ref sidebar on the left, the commit graph and history in the centre, the changes panel on the right, a thin status bar below. Nothing about the styling is novel on purpose. The surfaces are four close graphite grounds separated by hairlines, the type is one neutral sans at a dense 13px, and colour is spent almost entirely on meaning: the branch lanes, the blue of selection and primary action, and the green, amber and red of state.\n\nThe one owned idea is visible rather than decorative: destructive operations are drawn on the graph before they run (dashed ghost commits, struck-through replaced commits, a consequence readout, Apply or Cancel), and every finished operation offers Undo. Everything else stays out of the way. Routine actions happen in place, in anchored popovers and context menus, never in modal dialogs; the toolbar holds only Undo/Redo, Pull, Push and Branch, and the rest lives in the Ctrl+K palette.\n\nDensity is desktop-tool density: 34px graph rows, 28px list and menu rows, 30px buttons. Corners are soft everywhere (6 to 12px), which is a binding user commitment alongside the dark theme.",
+    "keyCharacteristics": [
+      "Four graphite grounds (bg-0 to bg-3, bg-4 for pressed) separated by 1px hairlines, no gradients or textures.",
+      "One accent blue for selection, focus and primary actions; semantic green, amber and red for state.",
+      "Eight saturated lane colours; lane 0 always belongs to the default branch.",
+      "Coloured fills always carry near-black text.",
+      "Inter for everything; JetBrains Mono only for literal machine strings.",
+      "Rounded throughout: 6px small controls and chips, 8px buttons, 10px inputs and menus, 12px popovers, banners and toasts.",
+      "No modals for routine work; the command palette is the only scrimmed overlay."
+    ],
+    "rules": [
+      {
+        "name": "The Dark Ink Rule",
+        "body": "Every coloured fill (primary, success and danger buttons, branch ref chips, file-status badges, active menu and palette rows) carries Ink text, never white.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Blue Rule",
+        "body": "Signal Blue means \"selected, focused, or the main action here\". It is not used for decoration, headings or idle icons.",
+        "section": "colors"
+      },
+      {
+        "name": "The Lane Zero Rule",
+        "body": "Colour 0 and the leftmost lane belong to the default branch. No other branch may take them.",
+        "section": "colors"
+      },
+      {
+        "name": "The Literal String Rule",
+        "body": "Mono marks a literal machine string: a SHA, a code line, a path in a diff header, a ref name quoted inside prose. Lists of branches, files and ref chips stay in Inter. Mono never appears as styling for headings or labels.",
+        "section": "typography"
+      },
+      {
+        "name": "The Section Header Rule",
+        "body": "The uppercase tracked label names a list group (Local, Remote, Unstaged files, graph columns). It never sits above a heading as an eyebrow.",
+        "section": "typography"
+      },
+      {
+        "name": "The Float-Only Shadow Rule",
+        "body": "Only surfaces that float above the workspace get the Pop shadow. Panels, banners, rows and buttons stay flat.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do put Ink (#0e1013) text on every coloured fill: buttons, ref chips, file badges, active menu rows.",
+      "Do reserve Signal Blue for selection, focus and the primary action in a group.",
+      "Do keep lane colour 0 and the leftmost lane for the default branch, and colour branch chips with their lane colour.",
+      "Do draw destructive operations on the graph first (dashed ghosts, struck replacements, a readout, Apply/Cancel) and offer Undo in a toast afterward.",
+      "Do handle routine input in anchored popovers, context menus and the Ctrl+K palette.",
+      "Do separate regions with ground steps and 1px hairlines; give the Pop shadow only to floating surfaces.",
+      "Do use the shared control vocabulary: 30px buttons at 8px radius, 24px small buttons, 26px icon buttons, 32px fields at 10px radius.",
+      "Do label conflict regions by the user's side (Yours in blue, the other side in violet).",
+      "Do use the single ease-out curve and keep state changes between 120 and 220ms."
+    ],
+    "donts": [
+      "Don't open modal dialogs for routine actions; the palette is the only scrimmed overlay.",
+      "Don't crowd the toolbar beyond Undo/Redo, Pull, Push and Branch; further actions belong in the palette and context menus.",
+      "Don't set white text on coloured fills.",
+      "Don't use Signal Blue as decoration, or for idle icons and headings.",
+      "Don't use JetBrains Mono for headings, labels, lists of refs or file lists.",
+      "Don't put the uppercase section label above a heading as an eyebrow.",
+      "Don't use sharp corners; nothing in the app is square-cornered except 1px rules.",
+      "Don't add a light theme or per-OS styling without a product decision; the app is dark and uses one design language across Linux, macOS and Windows.",
+      "Don't show the placeholder folder name as a product name or invent a logo."
+    ]
+  }
+}

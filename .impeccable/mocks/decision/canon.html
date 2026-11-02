@@ -1,0 +1,115 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Category standard — main window sketch</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{--g0:#151618;--g1:#1E1F22;--g2:#2B2D31;--g3:#35383E;--rule:#33363C;--tx:#E3E5E8;--tx2:#A1A6AE;--blue:#4FA3FF;--orange:#F27A54;--violet:#B58CFF;--green:#3DDC97}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1440px;height:900px;overflow:hidden;background:var(--g0);color:var(--tx);font:400 13px/1.35 "Inter",system-ui,sans-serif}
+.mono{font-family:"JetBrains Mono",monospace;font-size:12px}
+.tabs{height:38px;display:flex;align-items:center;gap:4px;padding:0 10px}
+.tab{height:28px;padding:0 14px;border-radius:8px;display:flex;align-items:center;color:var(--tx2)}
+.tab.on{background:var(--g2);color:var(--tx)}
+.tools{height:64px;background:var(--g1);display:flex;align-items:center;justify-content:center;gap:4px;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);position:relative}
+.repo{position:absolute;left:14px;display:flex;gap:10px}
+.pill{height:32px;padding:0 12px;border-radius:8px;background:var(--g2);display:flex;align-items:center;gap:6px}
+.t{width:64px;height:48px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--tx2);font-size:11.5px}
+.t i{width:20px;height:18px;border-radius:5px;background:var(--g3);display:block}
+.t.b{color:var(--tx)}
+.sep{width:1px;height:32px;background:var(--rule);margin:0 8px}
+.main{display:grid;grid-template-columns:248px 1fr 420px;height:772px}
+aside{background:var(--g1);border-right:1px solid var(--rule);padding:8px 0}
+.sec{padding:10px 14px 4px;color:var(--tx2);font-size:11px;font-weight:600;letter-spacing:.06em;display:flex;justify-content:space-between}
+.ref{height:28px;margin:0 6px;padding:0 10px;border-radius:7px;display:flex;align-items:center;gap:8px}
+.ref span{flex:1}
+.ref em{font-style:normal;color:var(--tx2);font-size:12px}
+.ref.on{background:var(--g3)}
+.hist{display:flex;flex-direction:column;background:var(--g0);min-width:0}
+.cols,.r{display:grid;grid-template-columns:150px 1fr 120px 96px 74px;align-items:center;padding-right:14px}
+.cols{height:30px;color:var(--tx2);font-size:11px;font-weight:600;letter-spacing:.06em;border-bottom:1px solid var(--rule)}
+.rows{position:relative;flex:1;overflow:hidden}
+.rows svg{position:absolute;left:0;top:0}
+.r{height:34px}
+.r .m{display:flex;gap:8px;align-items:center;white-space:nowrap;overflow:hidden}
+.r .a,.r .d,.r .mono{color:var(--tx2)}
+.r.sel{background:rgba(79,163,255,.12)}
+.lbl{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:6px;color:#0E1013}
+.right{background:var(--g1);border-left:1px solid var(--rule);display:flex;flex-direction:column}
+.rh{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--rule)}
+.rh h2{font-size:14px;font-weight:600}
+.f{height:30px;margin:0 6px;padding:0 10px;border-radius:7px;display:flex;align-items:center;gap:10px}
+.f span{flex:1}
+.f.on{background:var(--g3)}
+.st{width:16px;height:16px;border-radius:4px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;color:#0E1013}
+.msg{margin-top:auto;padding:14px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--rule)}
+.in{height:36px;border-radius:8px;background:var(--g2);padding:0 12px;display:flex;align-items:center}
+.ta{height:84px;border-radius:8px;background:var(--g2);padding:10px 12px;color:var(--tx2)}
+.commit{height:40px;border-radius:8px;background:var(--green);color:#0E1013;display:flex;align-items:center;justify-content:center;font-weight:700}
+.status{height:26px;background:var(--g1);border-top:1px solid var(--rule);display:flex;align-items:center;gap:16px;padding:0 14px;font-size:12px;color:var(--tx2)}
+</style></head><body>
+<div class="tabs"><div class="tab on">NewGitGUIProject</div><div class="tab">dotfiles</div><div class="tab">blog</div><div class="tab">+</div></div>
+<div class="tools">
+<div class="repo"><div class="pill">NewGitGUIProject ▾</div><div class="pill">feat/undo-log ▾</div></div>
+<div class="t"><i></i>Undo</div><div class="t"><i></i>Redo</div><div class="sep"></div>
+<div class="t b"><i></i>Pull ↓2</div><div class="t b"><i></i>Push ↑4</div><div class="t"><i></i>Branch</div><div class="t"><i></i>Stash</div><div class="t"><i></i>Pop</div><div class="sep"></div><div class="t"><i></i>Terminal</div>
+</div>
+<div class="main">
+<aside>
+<div class="sec"><span>LOCAL</span><span>4</span></div>
+<div class="ref"><span>main</span></div>
+<div class="ref on"><span>feat/undo-log</span><em>↑4 ↓2</em></div>
+<div class="ref"><span>feat/commit-graph</span></div>
+<div class="ref"><span>fix/wayland-scaling</span></div>
+<div class="sec"><span>REMOTE</span><span>2</span></div>
+<div class="ref"><span>origin</span><em>GitHub</em></div>
+<div class="ref"><span>codeberg</span><em>Forgejo</em></div>
+<div class="sec"><span>PULL REQUESTS</span><span>2</span></div>
+<div class="ref"><span>Orthogonal lane drawing</span><em>#12</em></div>
+<div class="ref"><span>Wayland scaling</span><em>#11</em></div>
+<div class="sec"><span>TAGS</span><span>1</span></div>
+<div class="sec"><span>STASHES</span><span>1</span></div>
+</aside>
+<section class="hist">
+<div class="cols"><span style="padding-left:14px">BRANCH / TAG</span><span>COMMIT MESSAGE</span><span>AUTHOR</span><span>DATE</span><span>SHA</span></div>
+<div class="rows">
+<svg width="150" height="742" viewBox="0 0 150 742" fill="none" stroke-width="2.5" stroke-linecap="round">
+<path d="M24 17V595" stroke="#4FA3FF"/>
+<path d="M96 51C96 34 24 40 24 17" stroke="#3DDC97"/><path d="M96 51V330C96 360 24 350 24 391" stroke="#3DDC97"/>
+<path d="M72 85V330C72 360 24 350 24 391" stroke="#B58CFF"/>
+<path d="M48 119V330C48 360 24 350 24 391" stroke="#F27A54"/>
+<g stroke="#151618" stroke-width="2"><circle cx="24" cy="17" r="9" fill="#4FA3FF"/><circle cx="96" cy="51" r="9" fill="#3DDC97"/><circle cx="72" cy="85" r="9" fill="#B58CFF"/><circle cx="48" cy="119" r="9" fill="#F27A54"/><circle cx="48" cy="153" r="9" fill="#F27A54"/><circle cx="24" cy="187" r="9" fill="#4FA3FF"/><circle cx="48" cy="221" r="9" fill="#F27A54"/><circle cx="96" cy="255" r="9" fill="#3DDC97"/><circle cx="48" cy="289" r="9" fill="#F27A54"/><circle cx="72" cy="323" r="9" fill="#B58CFF"/><circle cx="24" cy="357" r="9" fill="#4FA3FF"/><circle cx="24" cy="391" r="9" fill="#4FA3FF"/><circle cx="24" cy="425" r="9" fill="#4FA3FF"/><circle cx="24" cy="459" r="9" fill="#4FA3FF"/><circle cx="24" cy="493" r="9" fill="#4FA3FF"/><circle cx="24" cy="527" r="9" fill="#4FA3FF"/><circle cx="24" cy="561" r="9" fill="#4FA3FF"/><circle cx="24" cy="595" r="9" fill="#4FA3FF"/></g>
+</svg>
+<div class="r"><span></span><span class="m"><span class="lbl" style="background:var(--blue)">main</span><span class="lbl" style="background:var(--blue)">origin/main</span>Merge branch 'fix/wayland-scaling'</span><span class="a">You</span><span class="d">2 h ago</span><span class="mono">9f3c2e1</span></div>
+<div class="r"><span></span><span class="m"><span class="lbl" style="background:var(--green)">fix/wayland-scaling</span>Respect GDK_SCALE and per-monitor scale on Wayland</span><span class="a">You</span><span class="d">3 h ago</span><span class="mono">41d07ab</span></div>
+<div class="r"><span></span><span class="m"><span class="lbl" style="background:var(--violet)">feat/commit-graph</span>Draw commit lanes</span><span class="a">You</span><span class="d">5 h ago</span><span class="mono">c28e9f0</span></div>
+<div class="r sel"><span></span><span class="m"><span class="lbl" style="background:var(--orange)">feat/undo-log</span>Record undo entries for stash push and pop</span><span class="a">You</span><span class="d">yesterday</span><span class="mono">7ae1b44</span></div>
+<div class="r"><span></span><span class="m">Bind Ctrl+Z to the operation log</span><span class="a">You</span><span class="d">yesterday</span><span class="mono">0b9d3f2</span></div>
+<div class="r"><span></span><span class="m">Bump tauri to 2.1.1</span><span class="a">renovate[bot]</span><span class="d">yesterday</span><span class="mono">e5a1c07</span></div>
+<div class="r"><span></span><span class="m">Snapshot refs before every write</span><span class="a">You</span><span class="d">2 days ago</span><span class="mono">63fe0d9</span></div>
+<div class="r"><span></span><span class="m">Read scale factor from the active monitor</span><span class="a">You</span><span class="d">2 days ago</span><span class="mono">1c4b8e2</span></div>
+<div class="r"><span></span><span class="m">Add operation log table and migration</span><span class="a">You</span><span class="d">3 days ago</span><span class="mono">a90c5d1</span></div>
+<div class="r"><span></span><span class="m">First pass at lane allocation</span><span class="a">You</span><span class="d">3 days ago</span><span class="mono">5e7f2a0</span></div>
+<div class="r"><span></span><span class="m">Split diff view into hunks</span><span class="a">You</span><span class="d">4 days ago</span><span class="mono">d31b6c8</span></div>
+<div class="r"><span></span><span class="m"><span class="lbl" style="background:#A1A6AE">v0.1.0</span>Set up Svelte 5 frontend with Vite</span><span class="a">You</span><span class="d">5 days ago</span><span class="mono">8c0e4f7</span></div>
+<div class="r"><span></span><span class="m">Read commits through the git backend</span><span class="a">You</span><span class="d">6 days ago</span><span class="mono">f14a9b3</span></div>
+<div class="r"><span></span><span class="m">Open a repository from a path</span><span class="a">You</span><span class="d">1 week ago</span><span class="mono">2b7d0e6</span></div>
+<div class="r"><span></span><span class="m">Persist window size and position</span><span class="a">You</span><span class="d">1 week ago</span><span class="mono">0e9c7a1</span></div>
+<div class="r"><span></span><span class="m">Tauri 2 app scaffold</span><span class="a">You</span><span class="d">1 week ago</span><span class="mono">77d2f40</span></div>
+<div class="r"><span></span><span class="m">Initial commit</span><span class="a">You</span><span class="d">2 weeks ago</span><span class="mono">3a1f9c2</span></div>
+</div>
+</section>
+<section class="right">
+<div class="rh"><h2>3 file changes on feat/undo-log</h2><span style="color:var(--tx2)">Path ▾</span></div>
+<div class="sec"><span>UNSTAGED FILES (2)</span><span>Stage all</span></div>
+<div class="f on"><span class="st" style="background:#F2C14E">M</span><span>src/lib/graph/lanes.ts</span></div>
+<div class="f"><span class="st" style="background:#F2C14E">M</span><span>src/routes/+page.svelte</span></div>
+<div class="sec"><span>STAGED FILES (1)</span><span>Unstage all</span></div>
+<div class="f"><span class="st" style="background:var(--green)">A</span><span>src-tauri/src/git/oplog.rs</span></div>
+<div class="msg">
+<div class="in">Allocate lanes left to right by first parent</div>
+<div class="ta">Keeps main on the leftmost lane so long-lived branches stop jumping columns.</div>
+<div class="commit">Commit changes to 1 file</div>
+</div>
+</section>
+</div>
+<div class="status"><span>feat/undo-log</span><span>↑4 ↓2</span><span>Last fetched 3 min ago</span></div>
+</body></html>
