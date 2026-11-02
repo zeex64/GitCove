@@ -4,6 +4,7 @@ use super::error::{GitError, GitResult};
 use super::log::load_commit;
 use super::runner::{EMPTY_TREE, Git, Opts, split_nul};
 use super::types::{ChangeKind, CommitDetails, CommitFile, DiffLine, DiffLineKind, FileDiff, Hunk};
+use std::collections::HashSet;
 use std::path::Path;
 
 pub const MAX_DIFF_BYTES: usize = 2 * 1024 * 1024;
@@ -161,6 +162,7 @@ pub fn parse_diff(text: &str) -> Vec<FileDiff> {
                         old_no: Some(old_no),
                         new_no: Some(new_no),
                         text: line.get(1..).unwrap_or("").to_string(),
+                        staged: None,
                     });
                     old_no += 1;
                     new_no += 1;
@@ -173,6 +175,7 @@ pub fn parse_diff(text: &str) -> Vec<FileDiff> {
                         old_no: None,
                         new_no: Some(new_no),
                         text: line[1..].to_string(),
+                        staged: None,
                     });
                     new_no += 1;
                     continue;
@@ -184,6 +187,7 @@ pub fn parse_diff(text: &str) -> Vec<FileDiff> {
                         old_no: Some(old_no),
                         new_no: None,
                         text: line[1..].to_string(),
+                        staged: None,
                     });
                     old_no += 1;
                     continue;
@@ -194,6 +198,7 @@ pub fn parse_diff(text: &str) -> Vec<FileDiff> {
                         old_no: None,
                         new_no: None,
                         text: line[1..].trim().to_string(),
+                        staged: None,
                     });
                     continue;
                 }
@@ -455,6 +460,108 @@ pub fn get_working_diff(repo: &Path, path: &str, staged: bool) -> GitResult<File
     Ok(file_diff_from_raw(&out.stdout, path, ChangeKind::Modified))
 }
 
+/// Context lines shown around changes when the caller doesn't ask for a number.
+pub const DEFAULT_CONTEXT: u32 = 3;
+const MAX_CONTEXT: u32 = 1_000_000;
+
+fn unified(context: Option<u32>) -> String {
+    format!("-U{}", context.unwrap_or(DEFAULT_CONTEXT).min(MAX_CONTEXT))
+}
+
+fn mark_all(f: &mut FileDiff, staged: Option<bool>) {
+    for l in f.hunks.iter_mut().flat_map(|h| h.lines.iter_mut()) {
+        if matches!(l.kind, DiffLineKind::Add | DiffLineKind::Del) {
+            l.staged = staged;
+        }
+    }
+}
+
+/// Line numbers of the `kind` lines in a raw diff: new-side numbers for adds, old-side for dels.
+fn changed_line_numbers(raw: &[u8], kind: DiffLineKind) -> HashSet<u32> {
+    parse_diff(&String::from_utf8_lossy(raw))
+        .iter()
+        .flat_map(|f| &f.hunks)
+        .flat_map(|h| &h.lines)
+        .filter(|l| l.kind == kind)
+        .filter_map(|l| if kind == DiffLineKind::Add { l.new_no } else { l.old_no })
+        .collect()
+}
+
+/// Mark each +/- line of a HEAD → worktree diff as staged or not.
+///
+/// HEAD → index and index → worktree are diffed without context. An added line N of the
+/// worktree is staged unless index → worktree also adds line N (both share the worktree as
+/// their new side). A deleted line M of HEAD is staged when HEAD → index also deletes line M
+/// (both share HEAD as their old side).
+fn mark_staged(git: &Git, f: &mut FileDiff, path: &str, base: &str) -> GitResult<()> {
+    if f.binary || f.too_large || f.hunks.is_empty() {
+        return Ok(());
+    }
+    let ro = || Opts { read_only: true, ..Default::default() };
+    let staged = git
+        .exec(["diff", "--cached", "--no-color", "--no-ext-diff", "--no-renames", "-U0", base, "--", path], ro())?
+        .check()?;
+    let unstaged =
+        git.exec(["diff", "--no-color", "--no-ext-diff", "--no-renames", "-U0", "--", path], ro())?.check()?;
+    let staged_dels = changed_line_numbers(&staged.stdout, DiffLineKind::Del);
+    let unstaged_adds = changed_line_numbers(&unstaged.stdout, DiffLineKind::Add);
+    for l in f.hunks.iter_mut().flat_map(|h| h.lines.iter_mut()) {
+        l.staged = match l.kind {
+            DiffLineKind::Add => l.new_no.map(|n| !unstaged_adds.contains(&n)),
+            DiffLineKind::Del => l.old_no.map(|n| staged_dels.contains(&n)),
+            _ => None,
+        };
+    }
+    Ok(())
+}
+
+/// One file's change from HEAD to the working tree, with every +/- line marked `staged`.
+///
+/// Untracked files diff against nothing (every line unstaged). Conflicted files and staged
+/// renames are whole-file only, so their lines carry no `staged` flag.
+pub fn get_change_diff(repo: &Path, path: &str, context: Option<u32>) -> GitResult<FileDiff> {
+    let git = Git::new(repo);
+    let ro = || Opts { read_only: true, ..Default::default() };
+    let u = unified(context);
+    // Resolve HEAD once so every diff below compares against the same commit.
+    let base = git.rev_parse("HEAD")?.unwrap_or_else(|| EMPTY_TREE.to_string());
+
+    if is_untracked(&git, path)? {
+        let out = git.exec(["diff", "--no-index", "--no-color", "--no-ext-diff", &u, "--", "/dev/null", path], ro())?;
+        if out.code > 1 {
+            return Err(out.error());
+        }
+        let mut f = file_diff_from_raw(&out.stdout, path, ChangeKind::Untracked);
+        mark_all(&mut f, Some(false));
+        return Ok(f);
+    }
+    if is_unmerged(&git, path)? {
+        let out = git.exec(["diff", "--no-color", "--no-ext-diff", &u, &base, "--", path], ro())?.check()?;
+        let mut f = file_diff_from_raw(&out.stdout, path, ChangeKind::Conflicted);
+        f.status = ChangeKind::Conflicted;
+        return Ok(f);
+    }
+
+    // What the index records for this path relative to HEAD, including a rename source.
+    let ns = git.read(["diff", "--cached", "-M", "--no-ext-diff", "--name-status", "-z", &base])?;
+    let entry = parse_name_status(&ns).into_iter().find(|(_, p, _)| p == path);
+    if let Some((ChangeKind::Renamed, _, Some(old))) = &entry {
+        let out =
+            git.exec(["diff", "-M", "--no-color", "--no-ext-diff", &u, &base, "--", old, path], ro())?.check()?;
+        let mut f = file_diff_from_raw(&out.stdout, path, ChangeKind::Renamed);
+        f.status = ChangeKind::Renamed;
+        f.old_path = Some(old.clone());
+        return Ok(f);
+    }
+
+    // An empty diff (e.g. the staged change was reverted in the worktree) keeps the index's status.
+    let default_status = entry.map(|e| e.0).unwrap_or(ChangeKind::Modified);
+    let out = git.exec(["diff", "--no-color", "--no-ext-diff", "--no-renames", &u, &base, "--", path], ro())?.check()?;
+    let mut f = file_diff_from_raw(&out.stdout, path, default_status);
+    mark_staged(&git, &mut f, path, &base)?;
+    Ok(f)
+}
+
 fn parent_or_empty(git: &Git, id: &str) -> GitResult<(String, String)> {
     let commit = git.require_commit(id)?;
     let parent = git.rev_parse(&format!("{commit}^1"))?.unwrap_or_else(|| EMPTY_TREE.to_string());
@@ -485,7 +592,7 @@ pub fn get_commit_details(repo: &Path, id: &str) -> GitResult<CommitDetails> {
     Ok(CommitDetails { commit, files })
 }
 
-pub fn get_commit_diff(repo: &Path, id: &str, path: &str) -> GitResult<FileDiff> {
+pub fn get_commit_diff(repo: &Path, id: &str, path: &str, context: Option<u32>) -> GitResult<FileDiff> {
     let git = Git::new(repo);
     let (commit, parent) = parent_or_empty(&git, id)?;
     let ns = git.read(["diff-tree", "-r", "-M", "--no-commit-id", "--name-status", "-z", &parent, &commit])?;
@@ -493,8 +600,16 @@ pub fn get_commit_diff(repo: &Path, id: &str, path: &str) -> GitResult<FileDiff>
     let Some((status, _, old)) = entry else {
         return Err(GitError::not_found(format!("{path} didn't change in this commit.")));
     };
-    let mut args: Vec<String> =
-        vec!["diff".into(), "-M".into(), "--no-color".into(), "--no-ext-diff".into(), parent, commit, "--".into()];
+    let mut args: Vec<String> = vec![
+        "diff".into(),
+        "-M".into(),
+        "--no-color".into(),
+        "--no-ext-diff".into(),
+        unified(context),
+        parent,
+        commit,
+        "--".into(),
+    ];
     if let Some(o) = &old {
         args.push(o.clone());
     }

@@ -7,6 +7,7 @@ import type {
   FileChange,
   FileDiff,
   GitError,
+  Identity,
   OpEntry,
   OpResult,
   Operation,
@@ -23,6 +24,12 @@ import { newOpId, plural } from '../util/format'
 import type { AppState } from './app.svelte'
 
 export type Selection = { kind: 'wip' } | { kind: 'commit'; id: string }
+export type RepoTab = 'changes' | 'history'
+/** A file's checkbox: staged, not staged, or partly staged. */
+export type Check = boolean | 'mixed'
+
+const CONTEXT = 3
+const CONTEXT_STEP = 25
 
 export interface RefLabel {
   kind: 'branch' | 'remote' | 'tag'
@@ -59,16 +66,20 @@ export class RepoStore {
   loading = $state(true)
   loadError = $state<GitError | null>(null)
 
+  tab = $state<RepoTab>('changes')
   selection = $state<Selection>({ kind: 'wip' })
-  fileSel = $state<{ path: string; staged: boolean } | null>(null)
+  /** Path of the changed file whose diff is shown in the Changes tab. */
+  fileSel = $state<string | null>(null)
+  /** HEAD → worktree diff of `fileSel`; +/- lines carry whether they're staged. */
   diff = $state.raw<FileDiff | null>(null)
   diffError = $state<GitError | null>(null)
-  lineSel = $state.raw<Set<LineKey>>(new Set())
-  fullDiff = $state(false)
+  diffContext = $state(CONTEXT)
+  identity = $state<Identity | null>(null)
 
   details = new SvelteMap<string, CommitDetails>()
   commitFile = $state<string | null>(null)
   commitDiff = $state.raw<FileDiff | null>(null)
+  commitContext = $state(CONTEXT)
 
   preview = $state.raw<Preview | null>(null)
   previewOp = $state.raw<Operation | null>(null)
@@ -149,6 +160,16 @@ export class RepoStore {
   staged = $derived(this.files.filter((f) => f.staged && !f.conflict))
   unstaged = $derived(this.files.filter((f) => f.unstaged && !f.conflict))
   dirty = $derived(this.files.length > 0)
+  /** One list for the Changes tab, conflicts first. */
+  changeFiles = $derived([...this.conflicted, ...this.files.filter((f) => !f.conflict)])
+  /** The list header's checkbox. */
+  allCheck = $derived.by<Check>(() => {
+    const files = this.files.filter((f) => !f.conflict)
+    if (!files.some((f) => f.staged)) return false
+    // Unresolved conflicts can't be in the commit yet, so the list is never fully ticked while they remain.
+    if (this.conflicted.length) return 'mixed'
+    return files.every((f) => f.staged && !f.unstaged) ? true : 'mixed'
+  })
 
   /** Labels per commit, with the preview's ref moves applied. */
   labels = $derived.by(() => {
@@ -247,6 +268,7 @@ export class RepoStore {
       this.loading = false
     }
     backend.watchRepo(this.path).catch(() => {})
+    this.loadIdentity()
     this.loadPullRequests()
     if (this.remotes.length) {
       this.fetch(null, { quiet: true })
@@ -300,41 +322,26 @@ export class RepoStore {
 
   #reconcileSelection() {
     if (this.selection.kind === 'commit' && !this.byId.has(this.selection.id)) this.selection = { kind: 'wip' }
-    const f = this.fileSel
-    if (f) {
-      const still = this.files.find((x) => x.path === f.path && (f.staged ? x.staged : x.unstaged || x.conflict))
-      if (!still) {
-        // The file moved between lists (e.g. it was just staged); follow it.
-        const moved = this.files.find((x) => x.path === f.path)
-        this.fileSel = moved ? { path: f.path, staged: !!moved.staged && !moved.unstaged } : this.#firstFile()
-      }
-    } else {
-      this.fileSel = this.#firstFile()
+    const p = this.fileSel
+    if (!p || !this.files.some((f) => f.path === p)) {
+      this.fileSel = this.changeFiles[0]?.path ?? null
+      this.diffContext = CONTEXT
     }
   }
 
-  #firstFile(): { path: string; staged: boolean } | null {
-    const c = this.conflicted[0] ?? this.unstaged[0]
-    if (c) return { path: c.path, staged: false }
-    const s = this.staged[0]
-    return s ? { path: s.path, staged: true } : null
-  }
-
   async #reloadDiff() {
-    const f = this.fileSel
-    if (!f) {
+    const p = this.fileSel
+    if (!p) {
       this.diff = null
       return
     }
     try {
-      const d = await backend.getWorkingDiff(this.path, f.path, f.staged)
-      if (this.fileSel?.path !== f.path || this.fileSel.staged !== f.staged) return
-      const sameFile = this.diff?.path === d.path
+      const d = await backend.getChangeDiff(this.path, p, this.diffContext)
+      if (this.fileSel !== p) return
       this.diff = d
       this.diffError = null
-      if (!sameFile) this.lineSel = new Set()
-      else this.lineSel = new Set([...this.lineSel].filter((k) => changedLines(d).has(k)))
     } catch (e) {
+      if (this.fileSel !== p) return
       this.diff = null
       this.diffError = e as GitError
     }
@@ -342,15 +349,30 @@ export class RepoStore {
 
   // ---------- selection ----------
 
+  setTab(tab: RepoTab) {
+    this.tab = tab
+    if (tab === 'history' && this.selection.kind === 'wip' && !this.previewOp) {
+      // History opens on the newest commit, like a log does.
+      const first = this.layout.rows.find((r) => !r.commit.wip && !r.commit.ghost)
+      if (first) this.select({ kind: 'commit', id: first.commit.id })
+    }
+  }
+
   select(sel: Selection) {
     this.selection = sel
     if (sel.kind === 'commit') {
       this.commitFile = null
       this.commitDiff = null
-      this.#loadDetails(sel.id)
+      this.commitContext = CONTEXT
+      this.#loadDetails(sel.id).then((d) => {
+        // Open the first file so the diff area never starts empty.
+        if (d?.files[0] && this.selection.kind === 'commit' && this.selection.id === sel.id && !this.commitFile) {
+          this.selectCommitFile(d.files[0].path)
+        }
+      })
       this.#prefetchNeighbours(sel.id)
     } else {
-      this.fullDiff = false
+      this.tab = 'changes'
     }
   }
 
@@ -386,45 +408,53 @@ export class RepoStore {
     this.select(row.commit.wip ? { kind: 'wip' } : { kind: 'commit', id: row.commit.id })
   }
 
-  selectFile(path: string, staged: boolean) {
-    this.fileSel = { path, staged }
-    this.lineSel = new Set()
+  selectFile(path: string) {
+    if (this.fileSel !== path) this.diffContext = CONTEXT
+    this.fileSel = path
+    this.#reloadDiff()
+  }
+
+  /** Show more unchanged lines around every change in the file. */
+  expandDiff() {
+    this.diffContext += CONTEXT_STEP
     this.#reloadDiff()
   }
 
   async selectCommitFile(path: string) {
     if (this.selection.kind !== 'commit') return
     const id = this.selection.id
+    if (this.commitFile !== path) this.commitContext = CONTEXT
     this.commitFile = path
     try {
-      const d = await backend.getCommitDiff(this.path, id, path)
-      if (this.commitFile === path) this.commitDiff = d
+      const d = await backend.getCommitDiff(this.path, id, path, this.commitContext)
+      if (this.commitFile === path && this.selection.kind === 'commit' && this.selection.id === id) this.commitDiff = d
     } catch (e) {
       this.#app.fail(e)
     }
   }
 
-  toggleLine(key: LineKey, extend: LineKey | null) {
-    const next = new Set(this.lineSel)
-    if (extend && this.diff) {
-      const [h1, l1] = extend.split(':').map(Number)
-      const [h2, l2] = key.split(':').map(Number)
-      if (h1 === h2) {
-        const lines = this.diff.hunks[h1].lines
-        for (let i = Math.min(l1, l2); i <= Math.max(l1, l2); i++) {
-          if (lines[i].kind === 'add' || lines[i].kind === 'del') next.add(lineKey(h1, i))
-        }
-        this.lineSel = next
-        return
-      }
-    }
-    if (next.has(key)) next.delete(key)
-    else next.add(key)
-    this.lineSel = next
+  expandCommitDiff() {
+    if (!this.commitFile) return
+    this.commitContext += CONTEXT_STEP
+    this.selectCommitFile(this.commitFile)
   }
 
-  clearLines() {
-    this.lineSel = new Set()
+  async loadIdentity() {
+    try {
+      this.identity = await backend.getIdentity(this.path)
+    } catch {
+      this.identity = null
+    }
+  }
+
+  async setIdentity(name: string, email: string) {
+    try {
+      await backend.setIdentity(name, email)
+      this.#app.toast({ kind: 'success', message: `Git will sign commits as ${name}` })
+    } catch (e) {
+      this.#app.fail(e)
+    }
+    await this.loadIdentity()
   }
 
   // ---------- actions ----------
@@ -450,43 +480,65 @@ export class RepoStore {
     return this.#run(() => backend.unstage(this.path, paths), { toast: false })
   }
 
-  stageAll() {
-    return this.stage(this.unstaged.map((f) => f.path))
+  fileCheck(f: FileChange): Check {
+    if (f.conflict || !f.staged) return false
+    return f.unstaged ? 'mixed' : true
   }
 
-  unstageAll() {
-    return this.unstage(this.staged.map((f) => f.path))
+  /** A file's checkbox: a mixed or empty box stages the whole file; a full one unstages it. */
+  toggleFile(f: FileChange) {
+    if (f.conflict) return
+    return this.fileCheck(f) === true ? this.unstage([f.path]) : this.stage([f.path])
   }
 
-  /** Stage (or unstage, from the staged diff) the selected lines, or whole hunks when given. */
-  async applyLines(hunks?: number[]) {
-    const d = this.diff
-    const f = this.fileSel
-    if (!d || !f) return
-    const sel = hunks ? changedLines(d, hunks) : this.lineSel
-    const patch = buildPatch(d, sel, f.staged)
-    if (!patch) return
-    const n = sel.size
-    const verb = f.staged ? 'Unstage' : 'Stage'
-    const what = hunks ? plural(hunks.length, 'hunk') : plural(n, 'line')
-    const r = await this.#run(
-      () => backend.applyPatch(this.path, patch, true, f.staged, `${verb} ${what} in ${d.path}`),
-      { toast: false },
+  toggleAll() {
+    const files = this.files.filter((f) => !f.conflict)
+    const todo = files.filter((f) => !f.staged || f.unstaged).map((f) => f.path)
+    if (todo.length) return this.stage(todo)
+    if (files.length) return this.unstage(files.map((f) => f.path))
+  }
+
+  /** Lines of the shown diff that are in the next commit. */
+  stagedLines(d: FileDiff): Set<LineKey> {
+    const out = new Set<LineKey>()
+    d.hunks.forEach((h, hi) =>
+      h.lines.forEach((l, li) => {
+        if ((l.kind === 'add' || l.kind === 'del') && l.staged) out.add(lineKey(hi, li))
+      }),
     )
-    if (r) this.lineSel = new Set()
+    return out
   }
 
-  /** Throw away the selected lines from the working tree. Undoable from the op log. */
-  async discardLines() {
+  /** Put these changed lines of the shown file into the next commit, or take them out. */
+  async setLines(keys: LineKey[], include: boolean) {
     const d = this.diff
-    const f = this.fileSel
-    if (!d || !f || f.staged) return
-    const patch = buildPatch(d, this.lineSel, true)
+    if (!d || !keys.length) return
+    const next = this.stagedLines(d)
+    for (const k of keys) {
+      if (include) next.add(k)
+      else next.delete(k)
+    }
+    // Show the result at once; the refresh after the write confirms it.
+    this.diff = {
+      ...d,
+      hunks: d.hunks.map((h, hi) => ({
+        ...h,
+        lines: h.lines.map((l, li) => (l.kind === 'add' || l.kind === 'del' ? { ...l, staged: next.has(lineKey(hi, li)) } : l)),
+      })),
+    }
+    if (next.size === changedLines(d).size) return this.stage([d.path])
+    const label = `${include ? 'Stage' : 'Unstage'} ${plural(keys.length, 'line')} in ${d.path}`
+    const patch = next.size ? buildPatch(d, next, false) : null
+    return this.#run(() => backend.setFileLines(this.path, d.path, patch, label), { toast: false })
+  }
+
+  /** Throw these changed lines away from the working tree. Undoable from the op log. */
+  async discardLines(keys: LineKey[]) {
+    const d = this.diff
+    if (!d || !keys.length) return
+    const patch = buildPatch(d, new Set(keys), true)
     if (!patch) return
-    const r = await this.#run(() =>
-      backend.applyPatch(this.path, patch, false, true, `Discard ${plural(this.lineSel.size, 'line')} in ${d.path}`),
-    )
-    if (r) this.lineSel = new Set()
+    await this.#run(() => backend.applyPatch(this.path, patch, false, true, `Discard ${plural(keys.length, 'line')} in ${d.path}`))
   }
 
   async commit() {
@@ -665,6 +717,12 @@ export class RepoStore {
 
   async startPreview(op: Operation) {
     const seq = ++this.#previewSeq
+    // Previews are drawn on the graph; a discard's readout reads fine from the Changes tab.
+    if (op.kind !== 'discard') {
+      this.tab = 'history'
+      // The main area then explains the preview instead of showing an unrelated commit.
+      this.selection = { kind: 'wip' }
+    }
     this.previewOp = op
     this.previewLoading = true
     this.previewError = null

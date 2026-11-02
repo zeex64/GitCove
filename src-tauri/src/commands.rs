@@ -3,7 +3,7 @@
 
 use crate::git::error::{GitError, GitResult};
 use crate::git::types::{
-    CommitDetails, ConflictSide, FileDiff, LogResult, OpEntry, OpResult, Operation, Preview, ProgressEvent,
+    CommitDetails, ConflictSide, FileDiff, Identity, LogResult, OpEntry, OpResult, Operation, Preview, ProgressEvent,
     PullRequestList, Refs, RepoChangedEvent, RepoInfo, Status,
 };
 use crate::git::{diff, log, operation, oplog, ops, preview, refs, repo as repo_mod, status};
@@ -149,8 +149,24 @@ pub async fn get_commit_details(repo: String, id: String) -> Result<CommitDetail
 }
 
 #[tauri::command]
-pub async fn get_commit_diff(repo: String, id: String, path: String) -> Result<FileDiff, GitError> {
-    blocking(move || diff::get_commit_diff(Path::new(&repo), &id, &path)).await
+pub async fn get_commit_diff(repo: String, id: String, path: String, context: Option<u32>) -> Result<FileDiff, GitError> {
+    blocking(move || diff::get_commit_diff(Path::new(&repo), &id, &path, context)).await
+}
+
+/// One file's change from HEAD to the working tree, each +/- line marked `staged`.
+#[tauri::command]
+pub async fn get_change_diff(repo: String, path: String, context: Option<u32>) -> Result<FileDiff, GitError> {
+    blocking(move || diff::get_change_diff(Path::new(&repo), &path, context)).await
+}
+
+#[tauri::command]
+pub async fn get_identity(repo: String) -> Result<Identity, GitError> {
+    blocking(move || repo_mod::get_identity(Path::new(&repo))).await
+}
+
+#[tauri::command]
+pub async fn set_identity(name: String, email: String) -> Result<(), GitError> {
+    blocking(move || repo_mod::set_identity(&name, &email)).await
 }
 
 // ---------------------------------------------------------------------------------------
@@ -180,6 +196,20 @@ pub async fn apply_patch(
 ) -> Result<OpResult, GitError> {
     let r = repo.clone();
     write(&state, &repo, move || ops::apply_patch(Path::new(&r), &patch, cached, reverse, &label)).await
+}
+
+/// Make `patch` (against HEAD, or /dev/null for a new file) the staged state of `path`;
+/// `None` unstages the whole file.
+#[tauri::command]
+pub async fn set_file_lines(
+    state: State<'_, AppState>,
+    repo: String,
+    path: String,
+    patch: Option<String>,
+    label: String,
+) -> Result<OpResult, GitError> {
+    let r = repo.clone();
+    write(&state, &repo, move || ops::set_file_lines(Path::new(&r), &path, patch.as_deref(), &label)).await
 }
 
 #[tauri::command]

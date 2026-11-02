@@ -151,9 +151,10 @@ export function stashMenu(repo: RepoStore, s: Stash): MenuItem[] {
   ]
 }
 
-export function fileMenu(repo: RepoStore, f: FileChange, staged: boolean): MenuItem[] {
+export function fileMenu(repo: RepoStore, f: FileChange): MenuItem[] {
   const abs = `${repo.path}/${f.path}`
   const items: MenuItem[] = []
+  const check = repo.fileCheck(f)
   if (f.conflict) {
     items.push(
       { label: 'Use my version', run: () => repo.resolveMine(f.path) },
@@ -161,18 +162,17 @@ export function fileMenu(repo: RepoStore, f: FileChange, staged: boolean): MenuI
       { label: 'Mark as resolved', run: () => repo.resolve(f.path, 'mark') },
       SEP,
     )
-  } else if (staged) {
-    items.push({ label: 'Unstage', run: () => repo.unstage([f.path]) })
   } else {
-    items.push({ label: 'Stage', run: () => repo.stage([f.path]) })
+    if (check !== true) items.push({ label: 'Include in commit', run: () => repo.stage([f.path]) })
+    if (check !== false) items.push({ label: 'Leave out of commit', run: () => repo.unstage([f.path]) })
+    items.push(SEP)
   }
   items.push(
-    { label: 'Show full diff', run: () => { repo.selectFile(f.path, staged); repo.fullDiff = true } },
     { label: 'Open file', disabled: f.unstaged === 'deleted' || f.staged === 'deleted', run: () => openFile(abs) },
     { label: 'Reveal in file manager', run: () => revealFile(abs) },
     { label: 'Copy path', run: () => copyText(f.path) },
   )
-  if (!staged && !f.conflict) {
+  if (!f.conflict) {
     items.push(SEP, { label: 'Discard changes…', danger: true, run: () => repo.startPreview({ kind: 'discard', paths: [f.path] }) })
   }
   return items

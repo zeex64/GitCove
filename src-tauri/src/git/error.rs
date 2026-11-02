@@ -218,7 +218,7 @@ pub fn classify(stderr: &str) -> GitError {
             "Some files still have conflicts. Resolve them and stage the files, then try again.".into(),
         )
     } else if has(stderr, &["nothing to commit", "nothing added to commit", "no changes added to commit"]) {
-        (GitErrorKind::NothingToCommit, "There's nothing to commit. Stage some changes first.".into())
+        (GitErrorKind::NothingToCommit, "There's nothing to commit. Tick the files or lines to include first.".into())
     } else if has(
         stderr,
         &[

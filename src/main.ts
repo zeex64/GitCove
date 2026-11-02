@@ -37,15 +37,30 @@ async function stageScenario() {
     }
   }
   const scenario = params.get('scenario')
-  if (scenario !== 'preview' && scenario !== 'commit') return
+  const tab = params.get('tab')
+  const split = params.get('split')
+  const picked = params.has('picked')
+  const summary = params.get('summary')
+  if (scenario !== 'preview' && scenario !== 'commit' && !tab && !split && !picked && !summary && open !== 'branch' && open !== 'undo') return
   const { app } = await import('./lib/state/app.svelte')
   for (let i = 0; i < 50 && (!app.repo || app.repo.loading); i++) await new Promise((r) => setTimeout(r, 60))
   const repo = app.repo
   if (!repo) return
+  if (split !== null) app.panes.split = split === '1'
+  if (tab === 'history') repo.setTab('history')
+  if (summary) repo.summary = summary
+  if (picked) {
+    // Some lines of the open file in the commit, some left out.
+    for (let i = 0; i < 50 && !repo.diff; i++) await new Promise((r) => setTimeout(r, 60))
+    const d = repo.diff
+    if (d) repo.setLines(d.hunks[0].lines.flatMap((l, li) => (l.kind === 'add' && li < 6) || l.kind === 'del' ? [`0:${li}` as const] : []), true)
+  }
+  if (open === 'branch' || open === 'undo') setTimeout(() => (document.querySelector(open === 'branch' ? '.branch-seg' : '.caret-btn') as HTMLElement | null)?.click(), 300)
   if (scenario === 'preview') repo.startPreview({ kind: 'rebase', branch: 'feat/undo-log', onto: 'main' })
-  else {
+  else if (scenario === 'commit') {
     const c = repo.log.find((x) => x.summary.startsWith('Record undo'))
     if (c) {
+      repo.setTab('history')
       repo.select({ kind: 'commit', id: c.id })
       setTimeout(() => repo.selectCommitFile('src/lib/graph/lanes.ts'), 200)
     }

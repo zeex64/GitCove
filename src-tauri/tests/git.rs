@@ -287,7 +287,7 @@ fn diff_parses_hunks_binary_and_no_newline() {
     assert_eq!((bf.additions, bf.deletions), (0, 0));
     let tf = details.files.iter().find(|f| f.path == "t.txt").unwrap();
     assert_eq!((tf.additions, tf.deletions, tf.status), (3, 2, ChangeKind::Modified));
-    let cd = diff::get_commit_diff(r.p(), &head, "t.txt").unwrap();
+    let cd = diff::get_commit_diff(r.p(), &head, "t.txt", None).unwrap();
     assert_eq!(cd.hunks.len(), 1);
 
     // Root commit diff
@@ -295,7 +295,7 @@ fn diff_parses_hunks_binary_and_no_newline() {
     let rd = diff::get_commit_details(r.p(), &root).unwrap();
     assert_eq!(rd.files.len(), 1);
     assert_eq!(rd.files[0].status, ChangeKind::Added);
-    let rdd = diff::get_commit_diff(r.p(), &root, "t.txt").unwrap();
+    let rdd = diff::get_commit_diff(r.p(), &root, "t.txt", None).unwrap();
     assert_eq!(rdd.status, ChangeKind::Added);
     assert_eq!(rdd.additions, 3);
 }
@@ -1214,4 +1214,428 @@ fn oplog_is_capped_at_100_entries_and_drops_old_refs() {
     assert_eq!(log[0].label, "Create tag t100");
     let gone = r.git(&["for-each-ref", "--format=%(refname)", &format!("refs/gitcove/undo/{first}/")]);
     assert!(gone.is_empty(), "refs of entries that rolled off are deleted");
+}
+
+// ---------------------------------------------------------------------------------------
+// Change diff (HEAD → worktree) and line staging
+// ---------------------------------------------------------------------------------------
+
+/// Rust port of the frontend's `buildPatch(diff, selected, false)` (src/lib/util/patch.ts):
+/// a patch against the diff's old side holding only the +/- lines `pick` selects.
+fn build_patch(d: &FileDiff, pick: impl Fn(&DiffLine) -> bool) -> Option<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut delta: i64 = 0;
+    for h in &d.hunks {
+        let mut body: Vec<String> = Vec::new();
+        let (mut old_count, mut new_count) = (0i64, 0i64);
+        let mut changed = false;
+        let mut last_kept = false;
+        for l in &h.lines {
+            match l.kind {
+                DiffLineKind::Context => {
+                    body.push(format!(" {}", l.text));
+                    old_count += 1;
+                    new_count += 1;
+                    last_kept = true;
+                }
+                DiffLineKind::Add if pick(l) => {
+                    body.push(format!("+{}", l.text));
+                    new_count += 1;
+                    changed = true;
+                    last_kept = true;
+                }
+                DiffLineKind::Add => last_kept = false,
+                DiffLineKind::Del if pick(l) => {
+                    body.push(format!("-{}", l.text));
+                    old_count += 1;
+                    changed = true;
+                    last_kept = true;
+                }
+                DiffLineKind::Del => {
+                    body.push(format!(" {}", l.text));
+                    old_count += 1;
+                    new_count += 1;
+                    last_kept = true;
+                }
+                DiffLineKind::NoNewline => {
+                    if last_kept {
+                        body.push("\\ No newline at end of file".into());
+                    }
+                }
+            }
+        }
+        if !changed {
+            continue;
+        }
+        let start = h.old_start as i64;
+        out.push(format!("@@ -{start},{old_count} +{},{new_count} @@", start + delta));
+        delta += new_count - old_count;
+        out.extend(body);
+    }
+    if out.is_empty() {
+        return None;
+    }
+    let old = d.old_path.as_deref().unwrap_or(&d.path);
+    let mut patch = vec![format!("diff --git a/{old} b/{}", d.path)];
+    if matches!(d.status, ChangeKind::Untracked | ChangeKind::Added) {
+        patch.extend(["new file mode 100644".to_string(), "--- /dev/null".to_string(), format!("+++ b/{}", d.path)]);
+    } else {
+        patch.extend([format!("--- a/{old}"), format!("+++ b/{}", d.path)]);
+    }
+    patch.extend(out);
+    Some(patch.join("\n") + "\n")
+}
+
+fn find_line<'a>(d: &'a FileDiff, kind: DiffLineKind, text: &str) -> &'a DiffLine {
+    d.hunks
+        .iter()
+        .flat_map(|h| &h.lines)
+        .find(|l| l.kind == kind && l.text == text)
+        .unwrap_or_else(|| panic!("no {kind:?} line {text:?} in {d:#?}"))
+}
+
+/// (text, staged) of every +/- line, in order.
+fn staged_flags(d: &FileDiff) -> Vec<(String, Option<bool>)> {
+    d.hunks
+        .iter()
+        .flat_map(|h| &h.lines)
+        .filter(|l| matches!(l.kind, DiffLineKind::Add | DiffLineKind::Del))
+        .map(|l| (l.text.clone(), l.staged))
+        .collect()
+}
+
+fn context_count(d: &FileDiff) -> usize {
+    d.hunks.iter().flat_map(|h| &h.lines).filter(|l| l.kind == DiffLineKind::Context).count()
+}
+
+/// f.txt committed as `line 0`..`line 29`, then line 1 and line 25 edited in the worktree.
+fn two_region_fixture() -> Repo {
+    let r = Repo::new();
+    r.commit_file("f.txt", &lines(0..30), "base");
+    let mut changed: Vec<String> = (0..30).map(|i| format!("line {i}")).collect();
+    changed[1] = "FIRST CHANGE".into();
+    changed[25] = "SECOND CHANGE".into();
+    r.write("f.txt", &(changed.join("\n") + "\n"));
+    r
+}
+
+fn first_region(l: &DiffLine) -> bool {
+    l.text == "line 1" || l.text == "FIRST CHANGE"
+}
+
+fn second_region(l: &DiffLine) -> bool {
+    l.text == "line 25" || l.text == "SECOND CHANGE"
+}
+
+#[test]
+fn change_diff_marks_staged_lines() {
+    let r = two_region_fixture();
+    // Stage only the first region, the way the old two-list UI did (index → worktree patch).
+    let wd = diff::get_working_diff(r.p(), "f.txt", false).unwrap();
+    let patch = build_patch(&wd, first_region).unwrap();
+    ops::apply_patch(r.p(), &patch, true, false, "").unwrap();
+
+    let d = diff::get_change_diff(r.p(), "f.txt", None).unwrap();
+    assert_eq!(d.status, ChangeKind::Modified);
+    assert_eq!(d.hunks.len(), 2);
+    assert_eq!((d.additions, d.deletions), (2, 2));
+    assert_eq!(find_line(&d, DiffLineKind::Del, "line 1").staged, Some(true));
+    assert_eq!(find_line(&d, DiffLineKind::Add, "FIRST CHANGE").staged, Some(true));
+    assert_eq!(find_line(&d, DiffLineKind::Del, "line 25").staged, Some(false));
+    assert_eq!(find_line(&d, DiffLineKind::Add, "SECOND CHANGE").staged, Some(false));
+    assert!(d.hunks.iter().flat_map(|h| &h.lines).filter(|l| l.kind == DiffLineKind::Context).all(|l| l.staged.is_none()));
+    // `staged` is only serialized when set.
+    let ctx = d.hunks[0].lines.iter().find(|l| l.kind == DiffLineKind::Context).unwrap();
+    assert!(serde_json::to_value(ctx).unwrap().get("staged").is_none());
+    let add = find_line(&d, DiffLineKind::Add, "FIRST CHANGE");
+    assert_eq!(serde_json::to_value(add).unwrap()["staged"], serde_json::json!(true));
+    // The staged diff and worktree diff are untouched by the new reader.
+    assert!(r.git(&["diff", "--cached"]).contains("FIRST CHANGE"));
+
+    // Adjacent lines in one hunk can differ: the index holds one of two inserted lines.
+    let mut staged: Vec<String> = (0..30).map(|i| format!("line {i}")).collect();
+    staged.insert(11, "ADDED STAGED".into());
+    r.write("f.txt", &(staged.join("\n") + "\n"));
+    r.git(&["add", "f.txt"]);
+    let mut work = staged.clone();
+    work.insert(12, "ADDED UNSTAGED".into());
+    work.retain(|l| l != "line 19"); // only in HEAD and the index
+    r.write("f.txt", &(work.join("\n") + "\n"));
+    let d = diff::get_change_diff(r.p(), "f.txt", None).unwrap();
+    assert_eq!(
+        staged_flags(&d),
+        vec![
+            ("ADDED STAGED".to_string(), Some(true)),
+            ("ADDED UNSTAGED".to_string(), Some(false)),
+            ("line 19".to_string(), Some(false)),
+        ]
+    );
+    // A deletion that is staged.
+    r.git(&["add", "f.txt"]);
+    let d = diff::get_change_diff(r.p(), "f.txt", None).unwrap();
+    assert_eq!(find_line(&d, DiffLineKind::Del, "line 19").staged, Some(true));
+    assert!(staged_flags(&d).iter().all(|(_, s)| *s == Some(true)));
+}
+
+#[test]
+fn change_diff_for_untracked_unborn_deleted_and_renamed() {
+    let r = Repo::new();
+    // Unborn HEAD: a staged file edited afterwards, and an untracked file.
+    r.write("a.txt", "one\ntwo\n");
+    r.git(&["add", "a.txt"]);
+    r.write("a.txt", "one\ntwo\nthree\n");
+    r.write("u.txt", "x\ny\n");
+    let a = diff::get_change_diff(r.p(), "a.txt", None).unwrap();
+    assert_eq!(a.status, ChangeKind::Added);
+    assert_eq!(
+        staged_flags(&a),
+        vec![("one".into(), Some(true)), ("two".into(), Some(true)), ("three".into(), Some(false))]
+    );
+    let u = diff::get_change_diff(r.p(), "u.txt", None).unwrap();
+    assert_eq!(u.status, ChangeKind::Untracked);
+    assert_eq!(u.additions, 2);
+    assert_eq!(staged_flags(&u), vec![("x".into(), Some(false)), ("y".into(), Some(false))]);
+
+    // Line staging on an unborn HEAD: only "three" staged, then nothing, then undo.
+    let patch = build_patch(&a, |l| l.text == "three").unwrap();
+    ops::set_file_lines(r.p(), "a.txt", Some(&patch), "").unwrap();
+    assert_eq!(r.git(&["show", ":a.txt"]), "three");
+    ops::set_file_lines(r.p(), "a.txt", None, "").unwrap();
+    assert!(r.staged_names().is_empty());
+    oplog::undo(r.p(), None).unwrap();
+    assert_eq!(r.git(&["show", ":a.txt"]), "three");
+
+    // With commits: an untracked file, a deleted file and a staged rename.
+    let r = Repo::new();
+    r.commit_file("gone.txt", "g1\ng2\n", "gone");
+    r.commit_file("old.txt", &lines(0..20), "old");
+    std::fs::remove_file(r.p().join("gone.txt")).unwrap();
+    let g = diff::get_change_diff(r.p(), "gone.txt", None).unwrap();
+    assert_eq!(g.status, ChangeKind::Deleted);
+    assert_eq!(staged_flags(&g), vec![("g1".into(), Some(false)), ("g2".into(), Some(false))]);
+    r.git(&["rm", "-q", "--cached", "gone.txt"]);
+    let g = diff::get_change_diff(r.p(), "gone.txt", None).unwrap();
+    assert_eq!(staged_flags(&g), vec![("g1".into(), Some(true)), ("g2".into(), Some(true))]);
+
+    r.git(&["mv", "old.txt", "new.txt"]);
+    let mut renamed: Vec<String> = (0..20).map(|i| format!("line {i}")).collect();
+    renamed[3] = "EDITED AFTER RENAME".into();
+    r.write("new.txt", &(renamed.join("\n") + "\n"));
+    let n = diff::get_change_diff(r.p(), "new.txt", None).unwrap();
+    assert_eq!(n.status, ChangeKind::Renamed);
+    assert_eq!(n.old_path.as_deref(), Some("old.txt"));
+    assert_eq!((n.additions, n.deletions), (1, 1));
+    assert!(staged_flags(&n).iter().all(|(_, s)| s.is_none()), "renames are whole-file only");
+
+    // Binary files keep the existing handling.
+    r.write_bytes("bin.dat", &[0u8, 1, 2, 3]);
+    let b = diff::get_change_diff(r.p(), "bin.dat", None).unwrap();
+    assert!(b.binary);
+    assert_eq!(b.status, ChangeKind::Untracked);
+}
+
+#[test]
+fn change_diff_of_conflicted_file_has_no_flags() {
+    let r = Repo::new();
+    r.commit_file("f.txt", "base\n", "base");
+    r.git(&["switch", "-q", "-c", "other"]);
+    r.commit_file("f.txt", "theirs\n", "theirs");
+    r.git(&["switch", "-q", "main"]);
+    r.commit_file("f.txt", "ours\n", "ours");
+    assert!(!r.git_out(&["merge", "other"]).status.success());
+    let d = diff::get_change_diff(r.p(), "f.txt", None).unwrap();
+    assert_eq!(d.status, ChangeKind::Conflicted);
+    assert!(d.additions > 0);
+    assert!(staged_flags(&d).iter().all(|(_, s)| s.is_none()));
+    let e = ops::set_file_lines(r.p(), "f.txt", None, "").unwrap_err();
+    assert_eq!(e.kind, GitErrorKind::Conflict);
+    assert!(r.status().files.iter().any(|f| f.conflict.is_some()), "the conflict is left alone");
+}
+
+#[test]
+fn set_file_lines_stages_exact_selection_and_undoes() {
+    let r = two_region_fixture();
+    // Start with everything staged: set_file_lines replaces the staged state, it doesn't add to it.
+    ops::stage(r.p(), &["f.txt".into()]).unwrap();
+    let d = diff::get_change_diff(r.p(), "f.txt", None).unwrap();
+    assert!(staged_flags(&d).iter().all(|(_, s)| *s == Some(true)));
+
+    // (a) A subset: exactly those changes are staged.
+    let patch = build_patch(&d, first_region).unwrap();
+    let res = ops::set_file_lines(r.p(), "f.txt", Some(&patch), "").unwrap();
+    assert_eq!(res.message, "Staged lines in f.txt");
+    let entry = res.entry.unwrap();
+    assert_eq!((entry.kind.as_str(), entry.label.as_str()), ("stageLines", "Stage lines in f.txt"));
+    assert!(entry.undoable);
+    let cached = r.git(&["diff", "--cached"]);
+    assert!(cached.contains("+FIRST CHANGE") && cached.contains("-line 1\n"));
+    assert!(!cached.contains("SECOND CHANGE") && !cached.contains("-line 25"));
+    assert!(r.read("f.txt").contains("SECOND CHANGE"), "the worktree is untouched");
+    let d = diff::get_change_diff(r.p(), "f.txt", None).unwrap();
+    assert_eq!(
+        staged_flags(&d),
+        vec![
+            ("line 1".into(), Some(true)),
+            ("FIRST CHANGE".into(), Some(true)),
+            ("line 25".into(), Some(false)),
+            ("SECOND CHANGE".into(), Some(false)),
+        ]
+    );
+
+    // (b) None unstages everything for the path; a second time is a no-op.
+    let res = ops::set_file_lines(r.p(), "f.txt", None, "Unstage f.txt").unwrap();
+    assert_eq!(res.message, "Unstaged f.txt");
+    assert!(r.staged_names().is_empty());
+    let res = ops::set_file_lines(r.p(), "f.txt", None, "").unwrap();
+    assert!(res.entry.is_none());
+    assert_eq!(res.message, "f.txt had nothing staged");
+
+    // (c) Undo restores the previous index, one entry at a time.
+    oplog::undo(r.p(), None).unwrap();
+    let cached = r.git(&["diff", "--cached"]);
+    assert!(cached.contains("FIRST CHANGE") && !cached.contains("SECOND CHANGE"));
+    oplog::undo(r.p(), None).unwrap();
+    let cached = r.git(&["diff", "--cached"]);
+    assert!(cached.contains("FIRST CHANGE") && cached.contains("SECOND CHANGE"));
+    oplog::redo(r.p()).unwrap();
+    assert!(!r.git(&["diff", "--cached"]).contains("SECOND CHANGE"));
+
+    // (d) A stale patch fails and leaves the index exactly as it was.
+    let d = diff::get_change_diff(r.p(), "f.txt", None).unwrap();
+    let stale = build_patch(&d, second_region).unwrap();
+    // HEAD moves on outside the app, changing the context around the second region.
+    let mut upstream: Vec<String> = (0..30).map(|i| format!("line {i}")).collect();
+    upstream[26] = "line 26 changed upstream".into();
+    r.write("f.txt", &(upstream.join("\n") + "\n"));
+    r.git(&["add", "f.txt"]);
+    r.git(&["commit", "-q", "-m", "upstream"]);
+    upstream[1] = "FIRST CHANGE".into();
+    upstream[25] = "SECOND CHANGE".into();
+    r.write("f.txt", &(upstream.join("\n") + "\n"));
+    let fresh = diff::get_change_diff(r.p(), "f.txt", None).unwrap();
+    ops::set_file_lines(r.p(), "f.txt", Some(&build_patch(&fresh, first_region).unwrap()), "").unwrap();
+    let index_before = r.git(&["ls-files", "-s", "--", "f.txt"]);
+    let log_before = oplog::get_oplog(r.p()).unwrap().len();
+    let e = ops::set_file_lines(r.p(), "f.txt", Some(&stale), "").unwrap_err();
+    assert_eq!(e.kind, GitErrorKind::Other);
+    assert_eq!(e.message, "Couldn't stage those lines because the file changed. Refresh and try again.");
+    assert_eq!(r.git(&["ls-files", "-s", "--", "f.txt"]), index_before);
+    assert_eq!(oplog::get_oplog(r.p()).unwrap().len(), log_before);
+    assert!(r.git(&["diff", "--cached"]).contains("FIRST CHANGE"));
+
+    // A patch for a different file is refused before anything changes.
+    let e = ops::set_file_lines(r.p(), "other.txt", Some(&stale), "").unwrap_err();
+    assert!(e.message.contains("f.txt"), "{}", e.message);
+    assert_eq!(r.git(&["ls-files", "-s", "--", "f.txt"]), index_before);
+}
+
+#[test]
+fn set_file_lines_stages_part_of_an_untracked_file() {
+    let r = Repo::new();
+    r.commit_file("base.txt", "base\n", "base");
+    // A removed line that looks like a patch header must not confuse path detection.
+    r.write("new.txt", "a\nb\n-- c\nd\ne\n");
+    let d = diff::get_change_diff(r.p(), "new.txt", None).unwrap();
+    assert_eq!(d.status, ChangeKind::Untracked);
+    assert!(staged_flags(&d).iter().all(|(_, s)| *s == Some(false)));
+    let patch = build_patch(&d, |l| l.text != "-- c" && l.text != "e").unwrap();
+    assert!(patch.contains("new file mode 100644\n--- /dev/null\n+++ b/new.txt\n"));
+    let res = ops::set_file_lines(r.p(), "new.txt", Some(&patch), "Stage 3 lines in new.txt").unwrap();
+    assert_eq!(res.message, "Staged 3 lines in new.txt");
+    assert_eq!(r.git(&["show", ":new.txt"]), "a\nb\nd");
+    assert_eq!(r.read("new.txt"), "a\nb\n-- c\nd\ne\n");
+
+    let d = diff::get_change_diff(r.p(), "new.txt", None).unwrap();
+    assert_eq!(d.status, ChangeKind::Added);
+    assert_eq!(
+        staged_flags(&d),
+        vec![
+            ("a".into(), Some(true)),
+            ("b".into(), Some(true)),
+            ("-- c".into(), Some(false)),
+            ("d".into(), Some(true)),
+            ("e".into(), Some(false)),
+        ]
+    );
+    // Re-selecting from the combined diff (now status Added) replaces the staged lines.
+    let patch = build_patch(&d, |l| l.text == "-- c").unwrap();
+    ops::set_file_lines(r.p(), "new.txt", Some(&patch), "").unwrap();
+    assert_eq!(r.git(&["show", ":new.txt"]), "-- c");
+    // Unchecking the file makes it untracked again; undo brings the staged lines back.
+    ops::set_file_lines(r.p(), "new.txt", None, "").unwrap();
+    assert!(r.staged_names().is_empty());
+    assert_eq!(diff::get_change_diff(r.p(), "new.txt", None).unwrap().status, ChangeKind::Untracked);
+    oplog::undo(r.p(), None).unwrap();
+    assert_eq!(r.git(&["show", ":new.txt"]), "-- c");
+}
+
+#[test]
+fn diff_context_option() {
+    let r = Repo::new();
+    r.commit_file("f.txt", &lines(0..40), "base");
+    let mut changed: Vec<String> = (0..40).map(|i| format!("line {i}")).collect();
+    changed[20] = "CHANGED".into();
+    let head = r.commit_file("f.txt", &(changed.join("\n") + "\n"), "change");
+    let default = diff::get_commit_diff(r.p(), &head, "f.txt", None).unwrap();
+    let wide = diff::get_commit_diff(r.p(), &head, "f.txt", Some(10)).unwrap();
+    assert_eq!(context_count(&default), 6);
+    assert_eq!(context_count(&wide), 20);
+    assert_eq!(context_count(&diff::get_commit_diff(r.p(), &head, "f.txt", Some(0)).unwrap()), 0);
+
+    changed[30] = "WORKTREE".into();
+    r.write("f.txt", &(changed.join("\n") + "\n"));
+    assert_eq!(context_count(&diff::get_change_diff(r.p(), "f.txt", None).unwrap()), 6);
+    let whole = diff::get_change_diff(r.p(), "f.txt", Some(100)).unwrap();
+    assert_eq!(context_count(&whole), 39);
+    assert_eq!(staged_flags(&whole), vec![("line 30".into(), Some(false)), ("WORKTREE".into(), Some(false))]);
+}
+
+/// Runs `identity_in_isolated_config` in a child process whose global and system Git config
+/// are empty, so the developer's own identity is never read or written.
+#[test]
+fn identity_reads_and_writes_isolated_config() {
+    let tmp = tempfile::tempdir().unwrap();
+    let global = tmp.path().join("gitconfig");
+    std::fs::write(&global, "").unwrap();
+    let out = Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", "identity_in_isolated_config", "--nocapture", "--test-threads=1"])
+        .env("GITCOVE_ISOLATED_IDENTITY", "1")
+        .env("GIT_CONFIG_GLOBAL", &global)
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env("HOME", tmp.path())
+        .env("XDG_CONFIG_HOME", tmp.path())
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    assert!(out.status.success(), "{stdout}\n{}", String::from_utf8_lossy(&out.stderr));
+    assert!(stdout.contains("1 passed"), "the isolated test didn't run: {stdout}");
+    let written = std::fs::read_to_string(&global).unwrap();
+    assert!(written.contains("Ada Lovelace") && written.contains("ada@example.com"), "{written}");
+}
+
+/// Body of the test above. Does nothing unless run in that isolated child process.
+#[test]
+fn identity_in_isolated_config() {
+    if std::env::var_os("GITCOVE_ISOLATED_IDENTITY").is_none() {
+        return;
+    }
+    let r = Repo::new();
+    r.git(&["config", "--unset", "user.name"]);
+    r.git(&["config", "--unset", "user.email"]);
+    let id = repo::get_identity(r.p()).unwrap();
+    assert_eq!(id, Identity { name: None, email: None });
+    assert_eq!(serde_json::to_value(&id).unwrap(), serde_json::json!({"name": null, "email": null}));
+
+    let e = repo::set_identity("  ", "ada@example.com").unwrap_err();
+    assert_eq!(e.kind, GitErrorKind::Other);
+    assert!(repo::set_identity("Ada", "").is_err());
+    assert_eq!(repo::get_identity(r.p()).unwrap(), Identity { name: None, email: None });
+
+    repo::set_identity(" Ada Lovelace ", "ada@example.com\n").unwrap();
+    let id = repo::get_identity(r.p()).unwrap();
+    assert_eq!(id.name.as_deref(), Some("Ada Lovelace"));
+    assert_eq!(id.email.as_deref(), Some("ada@example.com"));
+    // Repository config wins over global.
+    r.git(&["config", "user.name", "Local Name"]);
+    assert_eq!(repo::get_identity(r.p()).unwrap().name.as_deref(), Some("Local Name"));
 }

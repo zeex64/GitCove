@@ -204,6 +204,9 @@ pub struct DiffLine {
     pub old_no: Option<u32>,
     pub new_no: Option<u32>,
     pub text: String,
+    /// Only in a change diff (HEAD → worktree): whether this +/- line is staged.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub staged: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -417,6 +420,14 @@ pub struct PullRequestList {
     pub status: PullRequestListStatus,
     pub message: Option<String>,
     pub items: Vec<PullRequest>,
+}
+
+/// The effective `user.name` / `user.email` for a repository.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Identity {
+    pub name: Option<String>,
+    pub email: Option<String>,
 }
 
 /// `resolve_conflict` side argument.

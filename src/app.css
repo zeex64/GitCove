@@ -40,6 +40,18 @@
   --lane-6: #f28cc0;
   --lane-7: #a3c76d;
 
+  /* Code in diffs: a restrained palette, each ≥5:1 on the diff floor. */
+  --syntax-foreground: var(--text);
+  --syntax-token-keyword: #ff8f7a;
+  --syntax-token-string: #8fd6e8;
+  --syntax-token-string-expression: #8fd6e8;
+  --syntax-token-function: #c9a7ff;
+  --syntax-token-constant: #f2c97a;
+  --syntax-token-parameter: var(--text);
+  --syntax-token-comment: #8b919b;
+  --syntax-token-punctuation: var(--text-2);
+  --syntax-token-link: #8fd6e8;
+
   --radius-sm: 6px;
   --radius: 8px;
   --radius-md: 10px;

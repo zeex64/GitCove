@@ -3,6 +3,7 @@ import type {
   DeviceCode,
   GithubRepo,
   GithubStatus,
+  Identity,
   LoginPoll,
   FileDiff,
   LogResult,
@@ -50,8 +51,10 @@ export interface Backend {
   getWorkingDiff(repo: string, path: string, staged: boolean): Promise<FileDiff>
   /** `get_commit_details` */
   getCommitDetails(repo: string, id: string): Promise<CommitDetails>
-  /** `get_commit_diff` — one file of a commit against its first parent. */
-  getCommitDiff(repo: string, id: string, path: string): Promise<FileDiff>
+  /** `get_change_diff` — one file from HEAD to the worktree; each +/- line carries `staged`. `context` lines default to 3. */
+  getChangeDiff(repo: string, path: string, context?: number): Promise<FileDiff>
+  /** `get_commit_diff` — one file of a commit against its first parent. `context` lines default to 3. */
+  getCommitDiff(repo: string, id: string, path: string, context?: number): Promise<FileDiff>
 
   /** `stage` — `git add -A -- paths` (handles deletions and untracked). */
   stage(repo: string, paths: string[]): Promise<OpResult>
@@ -63,6 +66,11 @@ export interface Backend {
    * `label` is the op-log label, e.g. "Stage 3 lines in src/app.ts".
    */
   applyPatch(repo: string, patch: string, cached: boolean, reverse: boolean, label: string): Promise<OpResult>
+  /**
+   * `set_file_lines` — make exactly the changes in `patch` (built against HEAD from a change diff)
+   * staged for this file; null unstages the file. Recorded as one op-log entry.
+   */
+  setFileLines(repo: string, path: string, patch: string | null, label: string): Promise<OpResult>
   /** `commit` — rejects 'nothingToCommit' when the index is empty (unless amending). */
   commit(repo: string, message: string, amend: boolean): Promise<OpResult>
   /** `checkout` — switch to a local branch, a remote branch (creates a tracking branch), or a commit (detached). */
@@ -110,6 +118,10 @@ export interface Backend {
   listPullRequests(repo: string, remote: string): Promise<PullRequestList>
   /** `open_terminal` — open the user's terminal at the repo root. */
   openTerminal(repo: string): Promise<void>
+  /** `get_identity` — the effective git user.name / user.email for this repo. */
+  getIdentity(repo: string): Promise<Identity>
+  /** `set_identity` — save user.name / user.email in the global git config. */
+  setIdentity(name: string, email: string): Promise<void>
   /** `startup_paths` — folders passed on the command line or in GITCOVE_OPEN. */
   startupPaths(): Promise<string[]>
 

@@ -29,3 +29,6 @@ src-tauri/gen
 
 # Impeccable local cache
 .impeccable/hook.cache.json
+
+# Captures of the real app on this machine show personal repos; they stay local
+.impeccable/review/real-*.png

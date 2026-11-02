@@ -89,16 +89,16 @@ class AppState {
   paletteOpen = $state(false)
   menu = $state<MenuState | null>(null)
   prompt = $state<PromptState | null>(null)
-  /** Opens the GitHub account popover from anywhere (palette, sidebar). */
+  /** Opens the GitHub account popover from anywhere (palette, branch menu). */
   accountOpen = $state(false)
   /** A new tab should open its clone form on this source. */
   welcomeClone = $state<'github' | 'url' | null>(null)
   gitVersion = $state<string | null>(null)
   gitMissing = $state<GitError | null>(null)
   panes = $state({
-    ...{ sidebar: 248, right: 420, rightAuto: true, sidebarCollapsed: false, wrap: true },
+    ...{ left: 340, split: false, wrap: true },
     ...load<Record<string, unknown>>(KEY_PANES, {}),
-  } as { sidebar: number; right: number; rightAuto: boolean; sidebarCollapsed: boolean; wrap: boolean })
+  } as { left: number; split: boolean; wrap: boolean })
 
   active = $derived(this.tabs.find((t) => t.id === this.activeId) ?? null)
   repo = $derived(this.active?.repo ?? null)

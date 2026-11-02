@@ -297,6 +297,8 @@ export function createDemoBackend(): Backend {
   const repos = new Map<string, RepoData>()
   for (const r of [buildMainRepo(), buildSmallRepo('dotfiles'), buildSmallRepo('blog')]) repos.set(r.info.path, r)
   const progressHandlers = new Set<(e: ProgressEvent) => void>()
+  /** Lines picked into the index per repo+path, as `add:text` / `del:text`. */
+  const lineState = new Map<string, Set<string>>()
   const demoAccount: GithubAccount = { login: 'alexkim', name: 'Alex Kim', avatarUrl: null, htmlUrl: 'https://github.com/alexkim' }
   const gh = { configured: ghScenario !== 'setup', account: ghScenario === 'signedin' ? demoAccount : null, polls: 0 }
   const ghStatus = (): GithubStatus => ({
@@ -683,6 +685,24 @@ export function createDemoBackend(): Backend {
       const kind = (staged ? f.staged : f.unstaged) ?? 'modified'
       return genericDiff(path, kind === 'conflicted' ? 'modified' : kind)
     },
+    async getChangeDiff(repo, path) {
+      const f = get(repo).files.find((x) => x.path === path)
+      if (!f) throw err('notFound', `${path} has no changes.`)
+      const d = await this.getWorkingDiff(repo, path, !f.unstaged)
+      if (f.conflict) return d
+      const picked = lineState.get(repo + '\0' + path)
+      let n = 0
+      const hunks = d.hunks.map((h) => ({
+        ...h,
+        lines: h.lines.map((l) => {
+          if (l.kind !== 'add' && l.kind !== 'del') return l
+          // A partly staged file without recorded picks stages every other line.
+          const staged = picked ? picked.has(`${l.kind}:${l.text}`) : !f.staged ? false : !f.unstaged ? true : n++ % 2 === 0
+          return { ...l, staged }
+        }),
+      }))
+      return { ...d, hunks, status: f.unstaged === 'untracked' && !f.staged ? 'untracked' : d.status }
+    },
     async getCommitDetails(repo, id): Promise<CommitDetails> {
       await delay(40)
       const c = byId(get(repo)).get(id)
@@ -702,12 +722,14 @@ export function createDemoBackend(): Backend {
     },
     stage: (repo, paths) =>
       write(repo, (r) => {
+        for (const p of paths) lineState.delete(repo + '\0' + p)
         const before = serialize(r)
         r.files = r.files.map((f) => (paths.includes(f.path) ? { ...f, staged: f.unstaged === 'untracked' ? 'added' : (f.unstaged ?? f.staged), unstaged: null, conflict: null } : f))
         return record(r, before, 'stage', paths.length === 1 ? `Stage ${paths[0]}` : `Stage ${paths.length} files`, 'Staged')
       }),
     unstage: (repo, paths) =>
       write(repo, (r) => {
+        for (const p of paths) lineState.delete(repo + '\0' + p)
         const before = serialize(r)
         r.files = r.files.map((f) => (paths.includes(f.path) ? { ...f, unstaged: f.staged === 'added' && f.path !== 'src-tauri/src/git/oplog.rs' ? 'untracked' : (f.staged ?? f.unstaged), staged: null } : f))
         return record(r, before, 'unstage', paths.length === 1 ? `Unstage ${paths[0]}` : `Unstage ${paths.length} files`, 'Unstaged')
@@ -722,6 +744,21 @@ export function createDemoBackend(): Backend {
           return reverse ? { ...f, unstaged: f.unstaged ?? 'modified' } : { ...f, staged: f.staged ?? 'modified' }
         })
         return record(r, before, cached ? 'stage' : 'discard', label, label.replace(/^(\w+)/, (w) => w + 'd').replace('Staged', 'Staged').replace('Discardd', 'Discarded'))
+      }),
+    setFileLines: (repo, path, patch, label) =>
+      write(repo, (r) => {
+        const before = serialize(r)
+        const key = repo + '\0' + path
+        const lines = (patch ?? '').split('\n').filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---) /.test(l))
+        if (!lines.length) lineState.delete(key)
+        else lineState.set(key, new Set(lines.map((l) => `${l[0] === '+' ? 'add' : 'del'}:${l.slice(1)}`)))
+        r.files = r.files.map((f) => {
+          if (f.path !== path) return f
+          const kind = f.unstaged ?? f.staged ?? 'modified'
+          if (!lines.length) return { ...f, staged: null, unstaged: kind === 'added' ? 'untracked' : kind }
+          return { ...f, staged: f.staged ?? (kind === 'untracked' ? 'added' : kind), unstaged: kind }
+        })
+        return record(r, before, 'stage', label, label.replace(/^Stage/, 'Staged').replace(/^Unstage/, 'Unstaged'))
       }),
     commit: (repo, message, amend) =>
       write(repo, (r) => {
@@ -741,6 +778,7 @@ export function createDemoBackend(): Backend {
           r.head.commit = c.id
         }
         r.info.isEmpty = false
+        for (const f of r.files) lineState.delete(repo + '\0' + f.path)
         r.files = r.files.map((f) => ({ ...f, staged: null })).filter((f) => f.unstaged)
         return record(r, before, 'commit', `Commit “${summary}”`, `Committed ${staged.length === 1 ? '1 file' : `${staged.length} files`} to ${r.head.branch ?? 'HEAD'}`)
       }),
@@ -940,6 +978,10 @@ export function createDemoBackend(): Backend {
       if (!gh.account) throw err('auth', 'Sign in to GitHub to see your repositories.')
       return ghRepos
     },
+    async getIdentity() {
+      return new URLSearchParams(location.search).get('identity') === 'none' ? { name: null, email: null } : { name: 'Alex Kim', email: 'alex@example.com' }
+    },
+    async setIdentity() {},
     async defaultCloneDir() {
       return DEMO_ROOT
     },

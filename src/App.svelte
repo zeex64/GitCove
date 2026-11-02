@@ -6,10 +6,8 @@
   import { onFolderDrop, pickFolder } from './lib/api/system'
   import TitleBar from './lib/components/TitleBar.svelte'
   import Toolbar from './lib/components/Toolbar.svelte'
-  import Sidebar from './lib/components/Sidebar.svelte'
-  import History from './lib/components/History.svelte'
-  import RightPanel from './lib/components/RightPanel.svelte'
-  import StatusBar from './lib/components/StatusBar.svelte'
+  import LeftPane from './lib/components/LeftPane.svelte'
+  import MainPane from './lib/components/MainPane.svelte'
   import Welcome from './lib/components/Welcome.svelte'
   import Resizer from './lib/components/Resizer.svelte'
   import Toasts from './lib/components/Toasts.svelte'
@@ -21,16 +19,9 @@
   let dropping = $state(false)
 
   const repo = $derived(app.repo)
-  const narrow = $derived(width < 1200)
-  const sidebarCollapsed = $derived(app.panes.sidebarCollapsed || narrow)
-  const sidebarW = $derived(sidebarCollapsed ? 52 : app.panes.sidebar)
-  /** Until the user drags it, the changes panel grows with the window (about 28%). */
-  const rightMax = $derived(Math.max(360, Math.min(960, width - sidebarW - 480)))
-  const rightW = $derived(
-    app.panes.rightAuto
-      ? Math.round(Math.min(rightMax, Math.max(narrow ? 360 : 420, width * 0.28)))
-      : Math.min(rightMax, narrow ? Math.min(app.panes.right, 380) : app.panes.right),
-  )
+  /** The diff keeps at least 520px; the left column gives way first. */
+  const leftMax = $derived(Math.max(280, Math.min(640, width - 520)))
+  const leftW = $derived(Math.min(leftMax, app.panes.left))
 
   onMount(() => {
     app.start()
@@ -74,13 +65,15 @@
         const err = await app.openPath(p)
         if (err) app.fail(err)
       }
+    } else if (mod && (k === '1' || k === '2') && repo) {
+      e.preventDefault()
+      repo.setTab(k === '1' ? 'changes' : 'history')
     } else if (mod && k === 'z' && !inField(e) && repo) {
       e.preventDefault()
       if (e.shiftKey) repo.redo()
       else repo.undo()
     } else if (e.key === 'Escape' && !app.paletteOpen && !app.menu && !app.prompt && repo) {
       if (repo.preview || repo.previewLoading || repo.previewError) repo.cancelPreview()
-      else if (repo.fullDiff) repo.fullDiff = false
     } else if (e.key === 'F5' && repo) {
       e.preventDefault()
       repo.refreshAll()
@@ -102,24 +95,11 @@
   {:else if repo}
     {#key app.activeId}
       <Toolbar {repo} />
-      <div class="main" style="grid-template-columns:{sidebarW}px 1px minmax(0,1fr) 1px {rightW}px">
-        <Sidebar {repo} collapsed={sidebarCollapsed} />
-        {#if sidebarCollapsed}
-          <div class="rule"></div>
-        {:else}
-          <Resizer bind:value={app.panes.sidebar} min={200} max={420} onend={() => app.persistPanes()} />
-        {/if}
-        <History {repo} />
-        <Resizer
-          bind:value={() => rightW, (v) => { app.panes.right = v; app.panes.rightAuto = false }}
-          min={340}
-          max={rightMax}
-          invert
-          onend={() => app.persistPanes()}
-        />
-        <RightPanel {repo} />
+      <div class="main" style="grid-template-columns:{leftW}px 1px minmax(0,1fr)">
+        <LeftPane {repo} />
+        <Resizer bind:value={() => leftW, (v) => (app.panes.left = v)} min={280} max={leftMax} onend={() => app.persistPanes()} />
+        <MainPane {repo} />
       </div>
-      <StatusBar {repo} />
     {/key}
   {:else}
     <Welcome />
@@ -153,10 +133,6 @@
     flex: 1;
     min-height: 0;
     display: grid;
-  }
-
-  .rule {
-    background: var(--line);
   }
 
   .blocked {

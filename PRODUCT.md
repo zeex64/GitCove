@@ -46,6 +46,7 @@ It also treats hosting providers as equals: GitHub, GitLab and Gitea/Forgejo int
 - Undo for every operation, and previews before destructive operations.
 - Multi-host integration: GitHub, GitLab and Gitea/Forgejo, including viewing and creating pull/merge requests and cloning from an account.
 - Built: GitHub sign-in through the OAuth device flow (token in the OS keychain), a picker of the user's repositories for cloning, pull requests on private GitHub repos, and the sign-in used for HTTPS fetch/pull/push to github.com.
+- Built: GitHub Desktop-style Changes and History tabs. One checkbox per changed file (git's index stays the source of truth: checked means staged, mixed means partly staged), individual lines picked in or out by clicking the diff's line numbers (each pick is one undo step), syntax-coloured unified or side-by-side diffs with expandable context, a labelled toolbar with a smart Fetch/Pull/Push button, and setting the git name and email from the commit box when they're missing.
 - Runs on Linux, macOS and Windows from one codebase.
 
 **Implied baseline (from the category, not yet scoped):** staging (including hunks/lines), committing, branching, merging, rebasing, stashing, fetch/pull/push, and diff viewing.
@@ -63,7 +64,9 @@ It also treats hosting providers as equals: GitHub, GitLab and Gitea/Forgejo int
 
 Set by the user (binding): **dark theme** and a **modern, rounded look**. Every visual direction must honor both.
 
-Standing preference (chosen 2026-11-01 over more distinctive directions): **the category standard for dark Git clients, played straight**. That means the layout lineage of GitKraken and Fork (ref sidebar, central commit graph, changes panel), executed at full craft, with no novelty styling. The quality bar is **GitHub Desktop**: its clarity, plain-language copy and calm commit flow set the polish level to match. The user rejects toolbars crammed with buttons; only the essential actions stay visible, and the rest live in a command palette and context menus.
+Standing preference (chosen 2026-11-01 over more distinctive directions): **the category standard for dark Git clients, played straight**, executed at full craft with no novelty styling. The quality bar is **GitHub Desktop**: its clarity, plain-language copy and calm commit flow set the polish level to match.
+
+Layout (chosen by the user on 2026-11-01, replacing the earlier GitKraken/Fork three-column layout): **GitHub Desktop's arrangement**. A left column with Changes and History tabs, the diff as the main area, branches, tags and pull requests in the Current branch menu, and a labelled toolbar. The commit graph lives in the History tab. The user rejects toolbars crammed with buttons; only the essential actions stay visible, and the rest live in the branch menu, a command palette and context menus.
 
 ## Evidence on Hand
 

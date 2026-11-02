@@ -37,7 +37,7 @@
       {#if op?.step && op.total}<span class="num">Step {op.step} of {op.total}</span> · {/if}
       {#if s?.state === 'rebasing' && op?.currentSummary}stopped at “{op.currentSummary}”. {/if}
       {#if conflicts}
-        <span class="warn"><TriangleAlert size={13} />{plural(conflicts, 'conflicted file')}: resolve them on the right, then continue.</span>
+        <span class="warn"><TriangleAlert size={13} />{plural(conflicts, 'conflicted file')}: resolve them in the Changes list, then continue.</span>
       {:else if s?.state !== 'bisecting'}
         <span class="ok"><CircleCheck size={13} />No conflicts left. Continue when you’re ready.</span>
       {/if}

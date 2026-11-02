@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { GraphRow, Seg } from '../graph/layout'
 
-  let { row, width, isHead }: { row: GraphRow; width: number; isHead: boolean } = $props()
+  let { row, width, isHead, height = 34 }: { row: GraphRow; width: number; isHead: boolean; height?: number } = $props()
 
-  const H = 34
-  const MID = H / 2
+  const H = $derived(height)
+  const MID = $derived(height / 2)
   const R = 7.5
 
   const x = (lane: number) => 14 + lane * 16
@@ -16,7 +16,9 @@
     const y2 = top ? MID : H
     if (x1 === x2) return `M${x1} ${y1}V${y2}`
     // Curves leave or enter the node's row smoothly, like the rest of the category.
-    return top ? `M${x1} ${y1}C${x1} ${y1 + 11} ${x2} ${y2 - 9} ${x2} ${y2}` : `M${x1} ${y1}C${x1} ${y1 + 9} ${x2} ${y2 - 11} ${x2} ${y2}`
+    const a = MID * 0.65
+    const b = MID * 0.53
+    return top ? `M${x1} ${y1}C${x1} ${y1 + a} ${x2} ${y2 - b} ${x2} ${y2}` : `M${x1} ${y1}C${x1} ${y1 + b} ${x2} ${y2 - a} ${x2} ${y2}`
   }
 
   const c = $derived(row.commit)

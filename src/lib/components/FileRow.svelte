@@ -1,19 +1,20 @@
 <script lang="ts">
-  import { Plus, Minus, RotateCcw } from '@lucide/svelte'
+  import { RotateCcw } from '@lucide/svelte'
   import type { ChangeKind } from '../api/types'
   import { splitPath } from '../util/format'
+  import Checkbox from './Checkbox.svelte'
 
   let {
     path,
     origPath = null,
     kind,
     selected = false,
-    staged = false,
     conflict = false,
     stats = null,
+    checked,
+    oncheck,
     onselect,
     onopen,
-    ontoggle,
     ondiscard,
     oncontextmenu,
   }: {
@@ -21,12 +22,13 @@
     origPath?: string | null
     kind: ChangeKind
     selected?: boolean
-    staged?: boolean
     conflict?: boolean
     stats?: { additions: number; deletions: number } | null
+    /** Shown as a checkbox when set: in the next commit, not, or partly. */
+    checked?: boolean | 'mixed'
+    oncheck?: () => void
     onselect: () => void
     onopen?: () => void
-    ontoggle?: () => void
     ondiscard?: () => void
     oncontextmenu?: (e: MouseEvent) => void
   } = $props()
@@ -44,7 +46,7 @@
 
   const TITLE: Record<ChangeKind, string> = {
     added: 'Added',
-    untracked: 'New file, not yet tracked',
+    untracked: 'New file',
     modified: 'Modified',
     deleted: 'Deleted',
     renamed: 'Renamed',
@@ -53,6 +55,7 @@
     conflicted: 'Conflicted',
   }
 
+  const k = $derived<ChangeKind>(conflict ? 'conflicted' : kind)
   const parts = $derived(splitPath(path))
 </script>
 
@@ -64,44 +67,41 @@
   tabindex="0"
   onclick={onselect}
   ondblclick={onopen}
-  oncontextmenu={oncontextmenu}
+  {oncontextmenu}
   onkeydown={(e) => {
-    if (e.key === ' ' && ontoggle) {
+    if (e.key === ' ' && oncheck && !conflict) {
       e.preventDefault()
-      ontoggle()
+      oncheck()
     } else if (e.key === 'Enter') onselect()
   }}
   title={origPath ? `${origPath} → ${path}` : path}
 >
-  <span class="badge {conflict ? 'conflicted' : kind}" title={TITLE[conflict ? 'conflicted' : kind]}>{LETTER[conflict ? 'conflicted' : kind]}</span>
+  {#if checked !== undefined && oncheck}
+    <Checkbox
+      {checked}
+      disabled={conflict}
+      label={checked === true ? `Leave ${parts.name} out of the commit` : `Include ${parts.name} in the commit`}
+      title={conflict ? 'Resolve the conflict first' : checked === 'mixed' ? 'Partly included. Click to include the whole file' : undefined}
+      onchange={oncheck}
+    />
+  {/if}
   <span class="path">
     {#if parts.dir}<span class="dir">{parts.dir}</span>{/if}<span class="name">{parts.name}</span>
   </span>
   {#if stats}
     <span class="stats mono num"><span class="a">+{stats.additions}</span> <span class="d">−{stats.deletions}</span></span>
   {/if}
-  <span class="actions">
-    {#if ondiscard}
-      <button class="icon-btn" aria-label="Discard changes" title="Discard changes…" onclick={(e) => { e.stopPropagation(); ondiscard() }}><RotateCcw size={14} /></button>
-    {/if}
-    {#if ontoggle}
-      <button
-        class="icon-btn toggle"
-        aria-label={staged ? 'Unstage' : 'Stage'}
-        title={staged ? 'Unstage (Space)' : 'Stage (Space)'}
-        onclick={(e) => { e.stopPropagation(); ontoggle() }}
-      >
-        {#if staged}<Minus size={15} />{:else}<Plus size={15} />{/if}
-      </button>
-    {/if}
-  </span>
+  {#if ondiscard}
+    <button class="icon-btn discard" aria-label="Discard changes to {parts.name}" title="Discard changes…" onclick={(e) => { e.stopPropagation(); ondiscard() }}><RotateCcw size={13} /></button>
+  {/if}
+  <span class="badge {k}" title={TITLE[k]}>{LETTER[k]}</span>
 </div>
 
 <style>
   .row {
     height: 30px;
     margin: 0 6px;
-    padding: 0 6px 0 10px;
+    padding: 0 8px 0 10px;
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
@@ -162,7 +162,6 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    direction: ltr;
   }
 
   .dir {
@@ -182,21 +181,14 @@
     color: var(--del-text);
   }
 
-  .actions {
-    display: flex;
-    gap: 2px;
-    flex: none;
+  .discard {
+    width: 22px;
+    height: 22px;
     opacity: 0;
   }
 
-  .row:hover .actions,
-  .row.selected .actions,
-  .row:focus-within .actions {
+  .row:hover .discard,
+  .row:focus-within .discard {
     opacity: 1;
-  }
-
-  .toggle:hover:not(:disabled) {
-    background: var(--accent);
-    color: var(--on-color);
   }
 </style>

@@ -43,9 +43,12 @@
       !!r?.head?.commit && { id: 'branch', group: 'Actions', label: 'New branch…', run: () => askNewBranch(r, center, r.head!.commit!, r.head!.branch ?? 'HEAD') },
       !!r?.dirty && { id: 'stash', group: 'Actions', label: 'Stash all changes', run: () => r.stashPush() },
       !!r?.refs?.stashes.length && { id: 'pop', group: 'Actions', label: 'Pop latest stash', run: () => r.stashApply(0, true) },
-      !!r?.unstaged.length && { id: 'stageall', group: 'Actions', label: 'Stage all changes', run: () => r.stageAll() },
-      !!r?.staged.length && { id: 'unstageall', group: 'Actions', label: 'Unstage all changes', run: () => r.unstageAll() },
-      !!r?.unstaged.length && { id: 'discardall', group: 'Actions', label: 'Discard all unstaged changes…', hint: 'preview first', run: () => r.startPreview({ kind: 'discard', paths: r.unstaged.map((f) => f.path) }) },
+      !!r?.dirty && r.allCheck !== true && { id: 'stageall', group: 'Actions', label: 'Include all changes in the commit', run: () => r.toggleAll() },
+      !!r?.staged.length && { id: 'unstageall', group: 'Actions', label: 'Leave all changes out of the commit', run: () => r.unstage(r.staged.map((f) => f.path)) },
+      !!r && { id: 'tabchanges', group: 'Actions', label: 'Show changes', hint: `${modKey} 1`, run: () => r.setTab('changes') },
+      !!r && { id: 'tabhistory', group: 'Actions', label: 'Show history', hint: `${modKey} 2`, run: () => r.setTab('history') },
+      !!r && { id: 'split', group: 'Actions', label: app.panes.split ? 'Show diffs unified' : 'Show diffs side by side', run: () => { app.panes.split = !app.panes.split; app.persistPanes() } },
+      !!r?.unstaged.length && { id: 'discardall', group: 'Actions', label: 'Discard changes left out of the commit…', hint: 'preview first', run: () => r.startPreview({ kind: 'discard', paths: r.unstaged.map((f) => f.path) }) },
       !!r?.undoable && { id: 'undo', group: 'Actions', label: `Undo ${r.undoable.label}`, hint: `${modKey} Z`, run: () => r.undo() },
       !!r?.redoable && { id: 'redo', group: 'Actions', label: `Redo ${r.redoable.label}`, hint: `${modKey} Shift Z`, run: () => r.redo() },
       !!r && { id: 'term', group: 'Actions', label: 'Open terminal here', run: () => r.openTerminal() },
@@ -72,7 +75,7 @@
         let n = 0
         for (const c of r.log) {
           if (c.summary.toLowerCase().includes(q) || c.id.startsWith(q) || c.authorName.toLowerCase().includes(q)) {
-            out.push({ id: 'c:' + c.id, group: 'Commits', label: c.summary, hint: `${c.shortId} · ${relativeTime(c.authorTime)}`, run: () => r.select({ kind: 'commit', id: c.id }) })
+            out.push({ id: 'c:' + c.id, group: 'Commits', label: c.summary, hint: `${c.shortId} · ${relativeTime(c.authorTime)}`, run: () => { r.tab = 'history'; r.select({ kind: 'commit', id: c.id }) } })
             if (++n >= 30) break
           }
         }

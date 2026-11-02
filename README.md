@@ -19,6 +19,17 @@ Build an installable bundle:
 npm run tauri build
 ```
 
+## Using it
+
+The window works like GitHub Desktop:
+
+- **Changes** (`Ctrl+1`) lists every changed file with a checkbox. A ticked file goes into the next commit; a half-ticked one is partly in. Click a file to see its diff. Click the line numbers in the diff to put single lines in or out (drag down the numbers to pick a run, shift-click for a range), or use the checkbox on a hunk. Right-click a changed line to discard it. Every pick is one step in Undo.
+- **History** (`Ctrl+2`) shows the commit graph. Pick a commit to read its files and diff. Drag a branch label onto another commit to preview a rebase.
+- The toolbar shows the current repository and branch (its menu has every branch, tag and pull request), a Fetch/Pull/Push button that changes with what your branch needs, and Undo naming what it would reverse. `Ctrl+K` searches everything else.
+- Diffs can be unified or side by side, are syntax coloured, and grow more context with the arrows on each hunk.
+
+The checkboxes are git's index: a tick runs `git add`, line picks are applied to the index, so the terminal and other tools see the same thing.
+
 ## GitHub sign-in
 
 The account button in the title bar signs in with GitHub's device flow: the app shows a short code, you approve it on github.com, and the app never sees your password. Once signed in you can pick one of your repositories to clone, private repositories list their pull requests, and HTTPS fetch/pull/push to github.com use the sign-in.
@@ -32,13 +43,13 @@ The token is stored in the system keychain (Secret Service/KWallet on Linux, Key
 
 ## Design previews in a browser
 
-`npm run dev` serves the interface at http://localhost:1420 with an in-memory demo repository instead of the Rust backend. Add `?scenario=` to see other states: `conflict`, `empty`, `detached`, `clean`, `offline`, `welcome`, `preview`, `commit`. GitHub account states: `?gh=setup` or `?gh=signedin`, with `&open=account`, `login`, `clone` or `clone-picked`.
+`npm run dev` serves the interface at http://localhost:1420 with an in-memory demo repository instead of the Rust backend. Add `?scenario=` to see other states: `conflict`, `empty`, `detached`, `clean`, `offline`, `welcome`, `preview`, `commit`. Other switches: `?tab=history`, `?split=1` (side-by-side diffs), `?picked` (some lines picked into the commit), `?open=branch` or `?open=undo` (menus), `?identity=none` (git without a name or email). GitHub account states: `?gh=setup` or `?gh=signedin`, with `&open=account`, `login`, `clone` or `clone-picked`.
 
 ## Tests
 
 ```bash
 npm test                         # partial-staging patches against a throwaway repo
-cd src-tauri && cargo test       # git backend: parsing, operations, preview, undo
+cd src-tauri && cargo test       # git backend: parsing, operations, line picks, preview, undo
 npm run check                    # Svelte and TypeScript checks
 ```
 
@@ -47,6 +58,7 @@ npm run check                    # Svelte and TypeScript checks
 - `src/lib/api/types.ts`, `src/lib/api/backend.ts`: the contract between the UI and the Rust backend.
 - `src/lib/state/`: per-repository state, actions, previews and undo.
 - `src/lib/graph/layout.ts`: commit graph lane layout.
-- `src/lib/components/`: the window's panels.
+- `src/lib/components/`: the window: `Toolbar` and `BranchMenu`, `LeftPane` (Changes / History tabs), `MainPane`, `DiffView`, `CommitView`.
+- `src/lib/util/highlight.ts`: syntax colour for diffs (Shiki, grammars loaded per language).
 - `src-tauri/src/`: git commands, operation log and undo, previews, file watching, pull request listing.
 - `PRODUCT.md`: product decisions. `.impeccable/`: design records.

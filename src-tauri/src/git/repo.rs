@@ -4,7 +4,7 @@ use super::error::{GitError, GitErrorKind, GitResult};
 use super::oplog::{self, NewEntry};
 use super::ops::run_network;
 use super::runner::{Emit, Git, Opts, git_version};
-use super::types::RepoInfo;
+use super::types::{Identity, RepoInfo};
 use std::path::{Path, PathBuf};
 
 pub fn version_string() -> GitResult<String> {
@@ -97,4 +97,24 @@ pub fn clone_repo(url: &str, dest: &str, op_id: &str, emit: Emit) -> GitResult<R
         NewEntry::final_("clone", format!("Clone {url}"), "Cloning can't be undone here. Delete the folder to remove the copy."),
     );
     Ok(info)
+}
+
+/// The `user.name` / `user.email` Git would use in this repository (local, global or system).
+pub fn get_identity(repo: &Path) -> GitResult<Identity> {
+    let git = Git::new(repo);
+    let get = |key: &str| -> GitResult<Option<String>> { Ok(git.config_get(key)?.filter(|v| !v.is_empty())) };
+    Ok(Identity { name: get("user.name")?, email: get("user.email")? })
+}
+
+/// Write `user.name` and `user.email` to the global Git config.
+pub fn set_identity(name: &str, email: &str) -> GitResult<()> {
+    let (name, email) = (name.trim(), email.trim());
+    if name.is_empty() || email.is_empty() {
+        return Err(GitError::other("Enter both a name and an email address."));
+    }
+    // Run outside any repository; --global ignores the working directory anyway.
+    let git = Git::new(std::env::temp_dir());
+    git.write(["config", "--global", "user.name", name])?;
+    git.write(["config", "--global", "user.email", email])?;
+    Ok(())
 }

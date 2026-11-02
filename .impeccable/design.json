@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-01T19:04:38+00:00",
-  "title": "Design System: Repository Window",
+  "generatedAt": "2026-11-02T01:41:01+00:00",
+  "title": "Design System: GitCove",
   "extensions": {
     "colorMeta": {
       "bg-0": {
@@ -428,6 +428,81 @@
           "#b5d882",
           "#dcfcb1"
         ]
+      },
+      "syntax-keyword": {
+        "role": "tertiary",
+        "displayName": "Keyword Coral",
+        "tonalRamp": [
+          "#2a0b05",
+          "#4f1a10",
+          "#7a2c1d",
+          "#a8402c",
+          "#d65a43",
+          "#ff8f7a",
+          "#ffbcae",
+          "#ffe9e4"
+        ],
+        "purpose": "Code in diffs via Shiki's CSS-variables theme (--syntax-*); at least 5:1 on the diff floor."
+      },
+      "syntax-string": {
+        "role": "tertiary",
+        "displayName": "String Ice",
+        "tonalRamp": [
+          "#06191e",
+          "#0f3038",
+          "#1c4d58",
+          "#2e6f7d",
+          "#4f96a6",
+          "#8fd6e8",
+          "#bde8f2",
+          "#e8f8fb"
+        ],
+        "purpose": "Code in diffs via Shiki's CSS-variables theme (--syntax-*); at least 5:1 on the diff floor."
+      },
+      "syntax-function": {
+        "role": "tertiary",
+        "displayName": "Function Lilac",
+        "tonalRamp": [
+          "#170b2a",
+          "#2c1a4d",
+          "#452e75",
+          "#6247a0",
+          "#8466cc",
+          "#c9a7ff",
+          "#dfccff",
+          "#f3ecff"
+        ],
+        "purpose": "Code in diffs via Shiki's CSS-variables theme (--syntax-*); at least 5:1 on the diff floor."
+      },
+      "syntax-constant": {
+        "role": "tertiary",
+        "displayName": "Constant Wheat",
+        "tonalRamp": [
+          "#251a05",
+          "#44320e",
+          "#664c1a",
+          "#8c6a2a",
+          "#b98d42",
+          "#f2c97a",
+          "#f7deaf",
+          "#fcf3e2"
+        ],
+        "purpose": "Code in diffs via Shiki's CSS-variables theme (--syntax-*); at least 5:1 on the diff floor."
+      },
+      "syntax-comment": {
+        "role": "tertiary",
+        "displayName": "Comment Slate",
+        "tonalRamp": [
+          "#121316",
+          "#24262a",
+          "#3a3d43",
+          "#53575e",
+          "#6e737b",
+          "#8b919b",
+          "#bcc0c6",
+          "#eceef0"
+        ],
+        "purpose": "Code in diffs via Shiki's CSS-variables theme (--syntax-*); at least 5:1 on the diff floor."
       }
     },
     "typographyMeta": {
@@ -435,13 +510,17 @@
         "displayName": "Display",
         "purpose": "First-run welcome heading only."
       },
+      "heading": {
+        "displayName": "Heading",
+        "purpose": "Main-area headings: \"No local changes\", \"What happens if you apply this\"."
+      },
       "title": {
         "displayName": "Title",
-        "purpose": "Selected commit summary in the commit detail panel."
+        "purpose": "Selected commit summary in the commit header."
       },
       "subtitle": {
         "displayName": "Subtitle",
-        "purpose": "Empty-state titles; welcome lede at 400; palette search input."
+        "purpose": "Small empty-state titles; welcome lede at 400; palette search input."
       },
       "banner-title": {
         "displayName": "Banner Title",
@@ -449,34 +528,34 @@
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Default for all UI text, rows, menus and buttons."
+        "purpose": "Default for all UI text, rows, menus and buttons; toolbar values and active tabs at 600."
       },
       "body-sm": {
         "displayName": "Body Small",
-        "purpose": "Banner readouts and sub-lines, sidebar filter."
+        "purpose": "Banner readouts, commit meta row, next-step sub-lines, notes and hints."
       },
       "caption": {
         "displayName": "Caption",
-        "purpose": "Small buttons, shortcut hints, toast links, prompt field labels."
+        "purpose": "Small buttons, diff inclusion readout, segmented options, history sub-lines, shortcut hints, toast links, prompt field labels."
       },
       "chip": {
         "displayName": "Chip",
-        "purpose": "Ref chips, conflict marker labels, counts, palette group names."
+        "purpose": "Ref chips, conflict marker labels, palette group names; at 400 the toolbar captions, diff stats and counters."
       },
       "label": {
         "displayName": "Section Label",
-        "purpose": "Uppercase list-group headers only; never an eyebrow above a heading."
+        "purpose": "Uppercase list-group headers only (branch menu sections, preview detail lists); never an eyebrow above a heading."
       },
       "mono": {
         "displayName": "Mono",
-        "purpose": "Literal machine strings: SHAs, diff lines, hunk headers, diff-header paths, refs quoted in prose. Ligatures off."
+        "purpose": "Literal machine strings on a 22px line: SHAs, diff lines, hunk headers, diff-header paths, refs quoted in prose. Ligatures off."
       }
     },
     "shadows": [
       {
         "name": "pop",
         "value": "0 14px 36px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35)",
-        "purpose": "Only for floating surfaces: context menus, anchored prompts and popovers, toasts, the command palette."
+        "purpose": "Only for floating surfaces: context menus, anchored prompts and popovers (branch menu, undo history, stashes), toasts, the command palette, the drag chip."
       }
     ],
     "motion": [
@@ -493,17 +572,12 @@
       {
         "name": "popover-in",
         "value": "140ms",
-        "purpose": "Anchored prompts and popovers: fade plus 4px drop."
+        "purpose": "Anchored prompts and popovers (branch menu, undo history, stashes): fade plus 4px drop."
       },
       {
         "name": "palette-in",
         "value": "150ms",
-        "purpose": "Command palette entrance; sidebar chevron rotation."
-      },
-      {
-        "name": "diff-toolbar-in",
-        "value": "160ms",
-        "purpose": "Diff line-selection toolbar rise."
+        "purpose": "Command palette entrance; commit body chevron rotation."
       },
       {
         "name": "banner-in",
@@ -513,7 +587,7 @@
       {
         "name": "toast-in",
         "value": "200ms",
-        "purpose": "Toast rise (8px); progress bar width."
+        "purpose": "Toast rise (8px); progress line width in the origin segment."
       },
       {
         "name": "ghost-in",
@@ -523,7 +597,12 @@
       {
         "name": "spinner",
         "value": "1s linear infinite",
-        "purpose": "Status bar busy spinner."
+        "purpose": "Busy icon in the toolbar origin segment."
+      },
+      {
+        "name": "indeterminate",
+        "value": "1s ease-out infinite",
+        "purpose": "Progress line sweep when a fetch, pull or push has no known total."
       },
       {
         "name": "shimmer",
@@ -538,32 +617,20 @@
     ],
     "breakpoints": [
       {
-        "name": "sidebar-rail",
-        "value": "1200px (window width): sidebar becomes a 52px icon rail; changes panel minimum drops to 360px"
+        "name": "left-column",
+        "value": "340px default; resizable 280px to min(640px, window - 520px) so the diff keeps at least 520px"
       },
       {
         "name": "toolbar-compact",
-        "value": "1180px (toolbar container): repo pill and search lose their text"
-      },
-      {
-        "name": "history-tighten",
-        "value": "900px (history container): author/date/SHA columns narrow"
-      },
-      {
-        "name": "history-no-sha",
-        "value": "680px (history container)"
-      },
-      {
-        "name": "history-no-author",
-        "value": "640px (history container)"
-      },
-      {
-        "name": "history-no-date",
-        "value": "420px (history container)"
+        "value": "1100px (toolbar container): the search button drops its label"
       },
       {
         "name": "short-window",
-        "value": "760px (window height): changes panel compresses lists, diff header and commit box"
+        "value": "760px (window height): commit description shrinks from 84px to 52px"
+      },
+      {
+        "name": "commit-files",
+        "value": "200px to 280px files column in the commit view"
       }
     ]
   },
@@ -588,9 +655,9 @@
       "name": "Commit Button",
       "kind": "button",
       "refersTo": "button-success",
-      "description": "Green fill reserved for committing.",
-      "html": "<button class=\"ds-btn-success\">Commit 1 file to main</button>",
-      "css": ".ds-btn-success{height:30px;padding:0 12px;border:0;border-radius:var(--radius);background:var(--success);color:var(--on-color);font:600 13px var(--font-ui);cursor:pointer;transition:background-color 120ms var(--ease-out)}.ds-btn-success:hover{background:var(--success-hover)}.ds-btn-success:focus-visible{outline:2px solid var(--accent);outline-offset:1px}"
+      "description": "Full-width green Commit action at the foot of the commit box; Ink text names the branch.",
+      "html": "<button class=\"ds-btn-success\">Commit to <strong>feat/undo-log</strong></button>",
+      "css": ".ds-btn-success{width:316px;height:38px;padding:0 12px;border:0;border-radius:var(--radius-md);background:var(--success);color:var(--on-color);font:600 13px var(--font-ui);cursor:pointer;transition:background-color 120ms var(--ease-out)}.ds-btn-success strong{font-weight:700}.ds-btn-success:hover{background:var(--success-hover)}.ds-btn-success:focus-visible{outline:2px solid var(--accent);outline-offset:1px}.ds-btn-success:disabled{background:var(--bg-3);color:var(--text-2);cursor:default}"
     },
     {
       "name": "Ghost Button",
@@ -609,20 +676,44 @@
       "css": ".ds-field{height:32px;width:280px;padding:0 10px;border:1px solid var(--line-strong);border-radius:var(--radius-md);background:var(--bg-2);color:var(--text);font:13px var(--font-ui);caret-color:var(--accent);outline:none;transition:border-color 120ms var(--ease-out)}.ds-field::placeholder{color:var(--text-3)}.ds-field:focus{border-color:var(--accent)}"
     },
     {
+      "name": "Toolbar Segments",
+      "kind": "nav",
+      "refersTo": "toolbar-segment",
+      "description": "Labelled 46px segments, caption over value, split by hairline rules; the origin action carries Signal Blue count pills and a progress line.",
+      "html": "<div class=\"ds-tb\"><button class=\"ds-seg\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"6\" x2=\"6\" y1=\"3\" y2=\"15\"/><circle cx=\"18\" cy=\"6\" r=\"3\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><path d=\"M18 9a9 9 0 0 1-9 9\"/></svg><span class=\"ds-txt\"><small>Current branch</small><b>feat/undo-log</b></span><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m6 9 6 6 6-6\"/></svg></button><span class=\"ds-rule\"></span><button class=\"ds-seg\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 19V5\"/><path d=\"m5 12 7-7 7 7\"/></svg><span class=\"ds-txt\"><b>Push origin</b><small>Last fetched just now</small></span><em class=\"ds-pill\">&#8593; 1</em><span class=\"ds-prog\"></span></button></div>",
+      "css": ".ds-tb{height:56px;display:flex;align-items:center;gap:2px;padding:0 10px 0 6px;background:var(--bg-1);border-top:1px solid var(--line);border-bottom:1px solid var(--line);font:13px var(--font-ui);color:var(--text)}.ds-seg{position:relative;width:250px;height:46px;padding:0 10px 0 12px;border:0;border-radius:var(--radius-md);background:transparent;color:var(--text);display:flex;align-items:center;gap:11px;text-align:left;cursor:pointer;transition:background-color 120ms var(--ease-out)}.ds-seg>svg{flex:none;color:var(--text-2)}.ds-seg:hover{background:var(--bg-2)}.ds-seg:active{background:var(--bg-3)}.ds-seg:focus-visible{outline:2px solid var(--accent);outline-offset:1px}.ds-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.ds-txt small{font-size:11.5px;color:var(--text-2)}.ds-txt b{font-weight:600}.ds-rule{width:1px;height:28px;background:var(--line)}.ds-pill{height:18px;padding:0 6px;border-radius:999px;background:var(--accent);color:var(--on-color);font:normal 700 11px var(--font-ui);display:inline-flex;align-items:center}.ds-prog{position:absolute;left:12px;right:12px;bottom:4px;height:2px;border-radius:999px;background:var(--bg-3);overflow:hidden}.ds-prog::after{content:\"\";position:absolute;inset:0;width:40%;border-radius:999px;background:var(--accent)}"
+    },
+    {
+      "name": "Pane Tabs",
+      "kind": "nav",
+      "refersTo": "pane-tab",
+      "description": "Changes / History with a 2px full-round Signal Blue underline and a neutral count pill.",
+      "html": "<div class=\"ds-tabs\"><button class=\"ds-tab ds-on\">Changes <em>3</em></button><button class=\"ds-tab\">History</button></div>",
+      "css": ".ds-tabs{width:340px;height:42px;display:grid;grid-template-columns:1fr 1fr;background:var(--bg-1);border-bottom:1px solid var(--line);font:13px var(--font-ui)}.ds-tab{position:relative;border:0;background:transparent;color:var(--text-2);font-weight:500;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;transition:color 120ms var(--ease-out),background-color 120ms var(--ease-out)}.ds-tab:hover{color:var(--text);background:rgba(255,255,255,.02)}.ds-tab:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}.ds-tab.ds-on{color:var(--text);font-weight:600}.ds-tab.ds-on::after{content:\"\";position:absolute;left:14px;right:14px;bottom:-1px;height:2px;border-radius:999px;background:var(--accent)}.ds-tab em{min-width:20px;height:18px;padding:0 6px;border-radius:999px;background:var(--bg-3);color:var(--text);font:normal 600 11px/18px var(--font-ui);text-align:center}"
+    },
+    {
+      "name": "File Rows with Checkboxes",
+      "kind": "custom",
+      "refersTo": "file-row",
+      "description": "Tri-state 16px checkbox, path, status badge on the right; selected row steps to bg-3, never solid blue.",
+      "html": "<div class=\"ds-files\"><div class=\"ds-row ds-sel\"><button class=\"ds-cb ds-on\" aria-label=\"mixed\"><span class=\"ds-dash\"></span></button><span class=\"ds-path\"><span class=\"ds-dir\">src/lib/graph/</span>lanes.ts</span><span class=\"ds-badge\">M</span></div><div class=\"ds-row\"><button class=\"ds-cb\" aria-label=\"unticked\"></button><span class=\"ds-path\"><span class=\"ds-dir\">src/routes/</span>+page.svelte</span><span class=\"ds-badge\">M</span></div><div class=\"ds-row\"><button class=\"ds-cb ds-on\" aria-label=\"ticked\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg></button><span class=\"ds-path\"><span class=\"ds-dir\">src-tauri/src/git/</span>oplog.rs</span><span class=\"ds-badge ds-add\">A</span></div></div>",
+      "css": ".ds-files{width:340px;padding:6px 0;background:var(--bg-1);font:13px var(--font-ui);color:var(--text)}.ds-row{height:30px;margin:0 6px;padding:0 8px 0 10px;border-radius:var(--radius-sm);display:flex;align-items:center;gap:10px}.ds-row:hover{background:var(--bg-2)}.ds-row.ds-sel{background:var(--bg-3)}.ds-cb{width:16px;height:16px;flex:none;padding:0;border:1.5px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--bg-0);color:var(--on-color);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background-color 120ms var(--ease-out),border-color 120ms var(--ease-out)}.ds-cb:hover{border-color:var(--text-3)}.ds-cb.ds-on{border-color:var(--accent);background:var(--accent)}.ds-cb.ds-on:hover{background:var(--accent-hover);border-color:var(--accent-hover)}.ds-cb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.ds-dash{width:8px;height:2px;border-radius:1px;background:var(--on-color)}.ds-path{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.ds-dir{color:var(--text-2)}.ds-badge{width:17px;height:17px;flex:none;border-radius:var(--radius-sm);background:var(--warning);color:var(--on-color);font:800 10.5px var(--font-ui);display:flex;align-items:center;justify-content:center}.ds-badge.ds-add{background:var(--success)}"
+    },
+    {
+      "name": "Diff with Inclusion Gutter",
+      "kind": "custom",
+      "refersTo": "diff-gutter-in",
+      "description": "Signature: 22px mono lines; lines in the commit get a solid Signal Blue number gutter with Ink numerals, lines left out a bg-1 gutter.",
+      "html": "<div class=\"ds-diff\"><div class=\"ds-hunk\"><span class=\"ds-cbx\"></span><span>@@ -38,9 +38,14 @@ export interface Lane</span></div><div class=\"ds-ln\"><span class=\"ds-g\"><i>38</i><i>38</i></span><span class=\"ds-m\"></span><span class=\"ds-t\"><span style=\"color:var(--syntax-token-keyword)\">export function</span> <span style=\"color:var(--syntax-token-function)\">allocate</span>(rows) {</span></div><div class=\"ds-ln ds-del ds-in\"><button class=\"ds-g\"><i>39</i><i></i></button><span class=\"ds-m\">-</span><span class=\"ds-t\">  <span style=\"color:var(--syntax-token-keyword)\">const</span> lanes = new Array(rows.length)</span></div><div class=\"ds-ln ds-add ds-in\"><button class=\"ds-g\"><i></i><i>39</i></button><span class=\"ds-m\">+</span><span class=\"ds-t\">  <span style=\"color:var(--syntax-token-keyword)\">const</span> lanes: Lane[] = []</span></div><div class=\"ds-ln ds-add ds-out\"><button class=\"ds-g\"><i></i><i>40</i></button><span class=\"ds-m\">+</span><span class=\"ds-t\">  <span style=\"color:var(--syntax-token-comment)\">// first parent keeps its lane</span></span></div></div>",
+      "css": ".ds-diff{width:620px;background:var(--bg-0);color:var(--text)}.ds-hunk{min-height:32px;padding:4px 12px;display:flex;align-items:center;gap:10px;background:var(--bg-1);border-top:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--text-2);font:11.5px var(--font-mono)}.ds-cbx{width:16px;height:16px;border:1.5px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--bg-0)}.ds-ln{display:flex;min-height:22px;line-height:22px;font:12px/22px var(--font-mono);font-variant-ligatures:none}.ds-g{display:flex;flex:none;padding:0;border:0;background:var(--bg-0);color:var(--text-3);font:inherit;cursor:pointer;transition:background-color 120ms var(--ease-out)}.ds-g i{width:48px;padding-right:10px;text-align:right;font-style:normal;font-size:11px}.ds-m{width:20px;flex:none;text-align:center;color:var(--text-3)}.ds-t{white-space:pre;color:var(--syntax-foreground,var(--text))}.ds-add{background:var(--add-bg)}.ds-add .ds-m{color:var(--add-text)}.ds-del{background:var(--del-bg)}.ds-del .ds-m{color:var(--del-text)}.ds-in .ds-g{background:var(--accent)}.ds-in .ds-g i{color:var(--on-color);font-weight:600}.ds-in .ds-g:hover{background:var(--accent-hover)}.ds-out .ds-g{background:var(--bg-1)}.ds-out .ds-g:hover{background:var(--bg-3)}.ds-g:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}.ds-in .ds-g:focus-visible{outline-color:var(--text)}"
+    },
+    {
       "name": "Ref Chips",
       "kind": "chip",
       "refersTo": "ref-chip-branch",
-      "description": "Branch chips fill with their lane colour and Ink text; remote chips ring, tags sit on bg-3.",
+      "description": "Branch chips fill with their lane colour and Ink text; remote chips ring, tags sit on bg-3. History rows show one chip plus \"+N\".",
       "html": "<span class=\"ds-chip\" style=\"background:var(--lane-0)\">main</span> <span class=\"ds-chip\" style=\"background:var(--lane-2)\">fix/wayland</span> <span class=\"ds-chip ds-chip-remote\" style=\"--c:var(--lane-0)\">origin/main</span> <span class=\"ds-chip ds-chip-tag\">v0.1.0</span>",
       "css": ".ds-chip{display:inline-flex;align-items:center;height:20px;max-width:220px;padding:0 7px;border-radius:var(--radius-sm);font:600 11.5px var(--font-ui);color:var(--on-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-chip-remote{background:transparent;color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}.ds-chip-tag{background:var(--bg-3);color:var(--text)}"
-    },
-    {
-      "name": "Sidebar Section",
-      "kind": "nav",
-      "refersTo": "section-label",
-      "description": "Uppercase section header over 28px rounded list items; checked-out branch on bg-3 at weight 600.",
-      "html": "<nav class=\"ds-side\"><div class=\"ds-sec\"><span>Local</span><span class=\"ds-count\">3</span></div><a class=\"ds-item ds-on\">feat/undo-log</a><a class=\"ds-item\">main</a><a class=\"ds-item\">fix/wayland-scaling</a></nav>",
-      "css": ".ds-side{width:248px;background:var(--bg-1);padding:6px 0;font:13px var(--font-ui);color:var(--text)}.ds-sec{height:32px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}.ds-count{font-size:11.5px;letter-spacing:0;font-weight:400}.ds-item{display:flex;align-items:center;height:28px;margin:0 6px;padding:0 8px 0 12px;border-radius:var(--radius-sm);cursor:pointer}.ds-item:hover{background:var(--bg-2)}.ds-item.ds-on{background:var(--bg-3);font-weight:600}"
     },
     {
       "name": "Context Menu",
@@ -651,25 +742,30 @@
   ],
   "narrative": {
     "northStar": "The Graphite Workbench",
-    "overview": "A dark, rounded desktop Git client in the GitKraken and Fork layout lineage, executed at GitHub Desktop's level of calm: ref sidebar on the left, the commit graph and history in the centre, the changes panel on the right, a thin status bar below. Nothing about the styling is novel on purpose. The surfaces are four close graphite grounds separated by hairlines, the type is one neutral sans at a dense 13px, and colour is spent almost entirely on meaning: the branch lanes, the blue of selection and primary action, and the green, amber and red of state.\n\nThe one owned idea is visible rather than decorative: destructive operations are drawn on the graph before they run (dashed ghost commits, struck-through replaced commits, a consequence readout, Apply or Cancel), and every finished operation offers Undo. Everything else stays out of the way. Routine actions happen in place, in anchored popovers and context menus, never in modal dialogs; the toolbar holds only Undo/Redo, Pull, Push and Branch, and the rest lives in the Ctrl+K palette.\n\nDensity is desktop-tool density: 34px graph rows, 28px list and menu rows, 30px buttons. Corners are soft everywhere (6 to 12px), which is a binding user commitment alongside the dark theme.",
+    "overview": "A dark, rounded desktop Git client in GitHub Desktop's arrangement, executed at GitHub Desktop's level of calm: a labelled toolbar across the top, a left column with Changes and History tabs, and the diff as the main area, roomy and full width. Branches, tags and pull requests live in the Current branch menu; there is no ref sidebar and no status bar. Nothing about the styling is novel on purpose. The surfaces are four close graphite grounds separated by hairlines, the type is one neutral sans at a dense 13px, and colour is spent almost entirely on meaning: the branch lanes, the blue of selection, inclusion and primary action, and the green, amber and red of state.\n\nThe one owned idea is visible rather than decorative: destructive operations are drawn on the graph before they run (dashed ghost commits, struck-through replaced commits, a consequence readout, Apply or Cancel), and every finished operation offers Undo. Everything else stays out of the way. Routine actions happen in place, in anchored popovers and context menus, never in modal dialogs; the toolbar holds four labelled segments (Current repository, Current branch, the Fetch/Pull/Push origin action, Undo) and a compact search, and the rest lives in the branch menu, the Ctrl+K palette and context menus.\n\nDensity is desktop-tool density: 30px file rows, 50px two-line history rows, 22px diff lines, 30px buttons. Corners are soft everywhere (6 to 12px), which is a binding user commitment alongside the dark theme.",
     "keyCharacteristics": [
       "Four graphite grounds (bg-0 to bg-3, bg-4 for pressed) separated by 1px hairlines, no gradients or textures.",
-      "One accent blue for selection, focus and primary actions; semantic green, amber and red for state.",
+      "One accent blue for selection, focus, commit inclusion and primary actions; semantic green, amber and red for state.",
       "Eight saturated lane colours; lane 0 always belongs to the default branch.",
       "Coloured fills always carry near-black text.",
-      "Inter for everything; JetBrains Mono only for literal machine strings.",
-      "Rounded throughout: 6px small controls and chips, 8px buttons, 10px inputs and menus, 12px popovers, banners and toasts.",
+      "Inter for everything; JetBrains Mono only for literal machine strings, coloured in diffs by a restrained syntax palette.",
+      "Rounded throughout: 6px small controls, checkboxes and chips, 8px buttons, 10px inputs, menus and toolbar segments, 12px popovers, banners, toasts and bordered lists; full-round pills and tab underlines.",
       "No modals for routine work; the command palette is the only scrimmed overlay."
     ],
     "rules": [
       {
         "name": "The Dark Ink Rule",
-        "body": "Every coloured fill (primary, success and danger buttons, branch ref chips, file-status badges, active menu and palette rows) carries Ink text, never white.",
+        "body": "Every coloured fill (primary, success and danger buttons, branch ref chips, file-status badges, ticked checkboxes, the in-commit gutter, sync count pills, active menu and palette rows) carries Ink text or glyphs, never white.",
         "section": "colors"
       },
       {
         "name": "The One Blue Rule",
-        "body": "Signal Blue means \"selected, focused, or the main action here\". It is not used for decoration, headings or idle icons.",
+        "body": "Signal Blue means \"selected, focused, included, or the main action here\". It is not used for decoration, headings or idle icons.",
+        "section": "colors"
+      },
+      {
+        "name": "The Inclusion Gutter Rule",
+        "body": "In the workspace's lists and diffs, the commit-inclusion gutter is the one place Signal Blue fills a row element: line numbers of lines in the commit sit on solid Signal Blue in Ink at weight 600, lines left out sit on bg-1 in Ash. Selected rows use Blue Wash (history) or a bg-3 step (files, popover items), never a solid blue fill; solid blue rows belong only to the floating context menu and palette.",
         "section": "colors"
       },
       {
@@ -684,36 +780,40 @@
       },
       {
         "name": "The Section Header Rule",
-        "body": "The uppercase tracked label names a list group (Local, Remote, Unstaged files, graph columns). It never sits above a heading as an eyebrow.",
+        "body": "The uppercase tracked label names a list group (Local branches, Remote branches, Tags, \"2 new commits\" over a preview list). It never sits above a heading as an eyebrow.",
         "section": "typography"
       },
       {
         "name": "The Float-Only Shadow Rule",
-        "body": "Only surfaces that float above the workspace get the Pop shadow. Panels, banners, rows and buttons stay flat.",
+        "body": "Only surfaces that float above the workspace get the Pop shadow. Panels, banners, rows, toolbar segments and buttons stay flat.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do put Ink (#0e1013) text on every coloured fill: buttons, ref chips, file badges, active menu rows.",
-      "Do reserve Signal Blue for selection, focus and the primary action in a group.",
+      "Do put Ink (#0e1013) text on every coloured fill: buttons, ref chips, file badges, ticked checkboxes, the in-commit gutter, active menu rows.",
+      "Do reserve Signal Blue for selection, focus, commit inclusion and the primary action in a group.",
+      "Do mark what goes into the commit with checkboxes and the Signal Blue gutter, and say it in words in the diff header.",
       "Do keep lane colour 0 and the leftmost lane for the default branch, and colour branch chips with their lane colour.",
       "Do draw destructive operations on the graph first (dashed ghosts, struck replacements, a readout, Apply/Cancel) and offer Undo in a toast afterward.",
+      "Do label toolbar segments with a caption over a value, and put branches, tags and pull requests in the branch menu.",
       "Do handle routine input in anchored popovers, context menus and the Ctrl+K palette.",
       "Do separate regions with ground steps and 1px hairlines; give the Pop shadow only to floating surfaces.",
-      "Do use the shared control vocabulary: 30px buttons at 8px radius, 24px small buttons, 26px icon buttons, 32px fields at 10px radius.",
+      "Do use the shared control vocabulary: 30px buttons at 8px radius, 24px small buttons, 26px icon buttons, 32px fields at 10px radius, 16px checkboxes at 6px.",
+      "Do keep the diff roomy: the main area never drops below 520px, and the left column gives way first.",
       "Do label conflict regions by the user's side (Yours in blue, the other side in violet).",
       "Do use the single ease-out curve and keep state changes between 120 and 220ms."
     ],
     "donts": [
       "Don't open modal dialogs for routine actions; the palette is the only scrimmed overlay.",
-      "Don't crowd the toolbar beyond Undo/Redo, Pull, Push and Branch; further actions belong in the palette and context menus.",
+      "Don't crowd the toolbar beyond its four labelled segments and search; further actions belong in the branch menu, the palette and context menus.",
+      "Don't bring back a ref sidebar or a status bar; their content lives in the branch menu, the toolbar and toasts.",
       "Don't set white text on coloured fills.",
-      "Don't use Signal Blue as decoration, or for idle icons and headings.",
+      "Don't use Signal Blue as decoration, or for idle icons and headings, or as a solid fill for selected list rows.",
       "Don't use JetBrains Mono for headings, labels, lists of refs or file lists.",
       "Don't put the uppercase section label above a heading as an eyebrow.",
-      "Don't use sharp corners; nothing in the app is square-cornered except 1px rules.",
+      "Don't use sharp corners; nothing in the app is square-cornered except 1px rules and the diff's line bands.",
       "Don't add a light theme or per-OS styling without a product decision; the app is dark and uses one design language across Linux, macOS and Windows.",
-      "Don't show the placeholder folder name as a product name or invent a logo."
+      "Don't show the folder name as the product name or invent a logo; the product is written GitCove."
     ]
   }
 }

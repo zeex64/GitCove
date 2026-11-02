@@ -4,7 +4,7 @@ use super::error::{GitError, GitErrorKind, GitResult, git_line};
 use super::oplog::{self, MoveStyle, NewEntry, RefMoveData, Undo, current_state, list_paths, stash_pop_or_apply};
 use super::refs::{branch_config, branch_exists, branch_tip, list_remotes, list_stashes};
 use super::runner::{Emit, Git, Opts, nul_paths, parse_progress, short};
-use super::snapshot::{FileSet, HeadSnap, align, capture, capture_files, head_snap};
+use super::snapshot::{FileSet, HeadSnap, align, capture, capture_files, head_snap, restore_files};
 use super::status::repo_state;
 use super::types::{ChangeKind, ConflictSide, OpResult, RepoState};
 use std::path::Path;
@@ -104,7 +104,7 @@ pub fn unstage(repo: &Path, paths: &[String]) -> GitResult<OpResult> {
     let snap = capture(&git)?;
     let res = index_op(&git, &paths, || {
         if unborn {
-            run_with_paths(&git, &["rm", "--cached", "-r", "-q", "--ignore-unmatch"], &paths)
+            run_with_paths(&git, &["rm", "--cached", "-r", "-q", "-f", "--ignore-unmatch"], &paths)
         } else {
             run_with_paths(&git, &["restore", "--staged"], &paths)
         }
@@ -120,6 +120,26 @@ pub fn unstage(repo: &Path, paths: &[String]) -> GitResult<OpResult> {
     }
 }
 
+/// Header lines of a patch (everything outside hunks, minus "diff" lines).
+///
+/// Inside a hunk, "--- x" is a removed line "-- x", not a header. Like `git apply --recount`,
+/// a hunk runs until a line that isn't a hunk line, or the next "@@" / "diff" line.
+fn patch_header_lines(patch: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let mut in_hunk = false;
+    for line in patch.lines() {
+        if line.starts_with("diff ") {
+            in_hunk = false;
+        } else if line.starts_with("@@ ") {
+            in_hunk = true;
+        } else if !(in_hunk && (line.is_empty() || line.starts_with([' ', '-', '+', '\\']))) {
+            in_hunk = false;
+            out.push(line);
+        }
+    }
+    out
+}
+
 /// Paths touched by a unified diff patch.
 pub fn patch_paths(patch: &str) -> Vec<String> {
     let mut out = Vec::new();
@@ -132,7 +152,7 @@ pub fn patch_paths(patch: &str) -> Vec<String> {
         let unq = if raw.starts_with('"') { super::diff::unquote_c(raw) } else { raw.to_string() };
         Some(unq.strip_prefix("a/").or_else(|| unq.strip_prefix("b/")).unwrap_or(&unq).to_string())
     };
-    for line in patch.lines() {
+    for line in patch_header_lines(patch) {
         if let Some(p) = line.strip_prefix("--- ").or_else(|| line.strip_prefix("+++ ")) {
             if let Some(p) = clean(p) {
                 out.push(p);
@@ -207,6 +227,107 @@ pub fn apply_patch(repo: &Path, patch: &str, cached: bool, reverse: bool, label:
     oplog::finish(&git, NewEntry::new("applyPatch", label, undo).snapshots(snap, capture(&git)?), message)
 }
 
+const STALE_LINES: &str = "Couldn't stage those lines because the file changed. Refresh and try again.";
+
+/// Put the index entries of `paths` back to HEAD (or remove them when `clear`).
+fn reset_index_paths(git: &Git, paths: &[String], before: &FileSet, clear: bool) -> GitResult<()> {
+    if clear {
+        // -f: drop the entry even when it differs from both HEAD and the worktree (the
+        // previous entry is in the undo snapshot; the worktree isn't touched).
+        return run_with_paths(git, &["rm", "--cached", "-f", "-q", "--ignore-unmatch"], paths);
+    }
+    // `restore --staged` fails on a path that is in neither HEAD nor the index (untracked).
+    let mut known = Vec::new();
+    for p in paths {
+        let in_index = before.get(p).is_some_and(|f| !f.index.is_empty());
+        if in_index || git.rev_parse(&format!("HEAD:{p}"))?.is_some() {
+            known.push(p.clone());
+        }
+    }
+    if known.is_empty() {
+        return Ok(());
+    }
+    run_with_paths(git, &["restore", "--staged"], &known)
+}
+
+/// Make exactly the changes in `patch` the staged state of `path`, as one undoable entry.
+///
+/// The patch's preimage is HEAD's version of the file (or nothing, for a new-file patch with
+/// `--- /dev/null`). `None` unstages everything for the path. If the patch no longer applies,
+/// the index is put back exactly as it was.
+pub fn set_file_lines(repo: &Path, path: &str, patch: Option<&str>, label: &str) -> GitResult<OpResult> {
+    if path.is_empty() {
+        return Err(GitError::other("Choose a file first."));
+    }
+    let git = Git::new(repo);
+    let patch = patch.filter(|p| !p.trim().is_empty());
+    let paths = with_rename_sources(&git, &[path.to_string()])?;
+    if let Some(p) = patch {
+        let touched = patch_paths(p);
+        if touched.is_empty() {
+            return Err(GitError::other("The change to apply is empty. Select some lines first."));
+        }
+        if let Some(other) = touched.iter().find(|t| !paths.contains(t)) {
+            return Err(GitError::other(format!("The selected lines are in {other}, not {path}. Refresh and try again.")));
+        }
+    }
+    let unborn = git.rev_parse("HEAD")?.is_none();
+    let mut before = capture_files(&git, &paths, false, true)?;
+    if before.files.iter().any(|f| f.index.iter().any(|e| e.stage > 0)) {
+        return Err(GitError::new(
+            GitErrorKind::Conflict,
+            format!("{path} has conflicts. Resolve them before choosing lines to commit."),
+            "",
+        ));
+    }
+    let snap = capture(&git)?;
+    // A new-file patch applies to an index without the path; anything else applies to HEAD's version.
+    let new_file = patch.is_some_and(|p| patch_header_lines(p).iter().any(|l| l.trim_end() == "--- /dev/null"));
+    let applied = (|| -> GitResult<()> {
+        reset_index_paths(&git, &paths, &before, unborn || new_file)?;
+        if let Some(p) = patch {
+            let mut data = p.as_bytes().to_vec();
+            if !data.ends_with(b"\n") {
+                data.push(b'\n');
+            }
+            let args = ["apply", "--cached", "--recount", "--whitespace=nowarn", "-"];
+            let out = git.exec(args, Opts { stdin: Some(data), ..Default::default() })?;
+            if !out.ok() {
+                let e = out.error();
+                if e.kind == GitErrorKind::Other || e.kind == GitErrorKind::NotFound {
+                    return Err(e.with_kind(GitErrorKind::Other).with_message(STALE_LINES));
+                }
+                return Err(e);
+            }
+        }
+        Ok(())
+    })();
+    if let Err(e) = applied {
+        if let Err(re) = restore_files(&git, &before) {
+            let msg = format!("Couldn't stage those lines, and the staged changes in {path} couldn't be put back: {}", re.message);
+            return Err(re.with_message(msg));
+        }
+        return Err(e);
+    }
+    let mut after = capture_files(&git, &paths, false, true)?;
+    align(&mut before, &mut after);
+    let unstaging = patch.is_none();
+    if before == after {
+        let message =
+            if unstaging { format!("{path} had nothing staged") } else { format!("Those lines in {path} were already staged") };
+        return Ok(OpResult { entry: None, message });
+    }
+    let label = if !label.trim().is_empty() {
+        label.trim().to_string()
+    } else if unstaging {
+        format!("Unstage {path}")
+    } else {
+        format!("Stage lines in {path}")
+    };
+    let message = past_tense_label(&label, true, unstaging);
+    oplog::finish(&git, NewEntry::new("stageLines", label, Undo::Index { before, after }).snapshots(snap, capture(&git)?), message)
+}
+
 // ---------------------------------------------------------------------------------------
 // Commit
 // ---------------------------------------------------------------------------------------
@@ -229,7 +350,7 @@ pub fn commit(repo: &Path, message: &str, amend: bool) -> GitResult<OpResult> {
     if !amend && !merging && staged_count == 0 {
         return Err(GitError::new(
             GitErrorKind::NothingToCommit,
-            "There's nothing to commit. Stage some changes first.",
+            "There's nothing to commit. Tick the files or lines to include first.",
             "",
         ));
     }

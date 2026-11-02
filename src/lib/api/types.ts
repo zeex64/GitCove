@@ -170,6 +170,8 @@ export interface DiffLine {
   newNo: number | null
   /** Line content without the leading +/-/space marker and without the trailing newline. */
   text: string
+  /** Only in a change diff (HEAD → worktree): whether this +/- line is staged for the next commit. */
+  staged?: boolean
 }
 
 export interface Hunk {
@@ -192,6 +194,12 @@ export interface FileDiff {
   additions: number
   deletions: number
   hunks: Hunk[]
+}
+
+/** Who git will record as the author of new commits in a repository. */
+export interface Identity {
+  name: string | null
+  email: string | null
 }
 
 export interface CommitFile {
